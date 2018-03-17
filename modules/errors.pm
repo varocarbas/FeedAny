@@ -8,7 +8,7 @@ sub ShowError
 		$filePath = $Globals_Variables::RootPath . $Globals_Variables::IONames{Globals_Constants::IO_ERRORS_FILE()};
 	}
 	
-	my $message = (scalar(@_) > 1 && $_[1] ? "WARNING" : "ERROR") . " --- " . $_[0] . "\n";
+	my $message = "ERROR --- " . $_[0] . "\n";
 	
 	if (!IO::TextToFile($message, $filePath))
 	{
@@ -24,7 +24,7 @@ sub ShowError
 	
 	print($message);
 	
-	if (scalar(@_) > 2 && $_[2]) { exit(1); }
+	exit(1);
 }
 
 #Returns the message associated with the given error ID.

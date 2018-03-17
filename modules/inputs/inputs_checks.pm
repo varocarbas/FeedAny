@@ -72,8 +72,7 @@ sub InputsAreOKBasic
 					Errors::GetErrorMessage
 					(
 						Globals_Constants::ERROR_INPUT_BASIC()
-					),
-					0, 1
+					)
 				);
 			}
 		}

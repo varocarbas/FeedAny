@@ -95,8 +95,7 @@ sub AddTempInput
 					Errors::GetErrorMessage
 					(
 						Globals::ERROR_INPUT_LABEL_REPEATED(), $label
-					),
-					0, 1
+					)
 				);
 			}
 			else
