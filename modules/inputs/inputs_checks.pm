@@ -65,15 +65,9 @@ sub InputsAreOKBasic
 
 		foreach $basic (@Globals_Variables::InputBasic)
 		{
-			if (!exists $inputs{$basic})
+			if (!exists $inputs{$basic} or length(Accessory::Trim($inputs{$basic}->{"Value"})) < 1)
 			{
-				Errors::ShowError
-				(
-					Errors::GetErrorMessage
-					(
-						Globals_Constants::ERROR_INPUT_BASIC()
-					)
-				);
+				Errors::ShowError(Globals_Constants::ERROR_INPUT_BASIC());
 			}
 		}
 	}

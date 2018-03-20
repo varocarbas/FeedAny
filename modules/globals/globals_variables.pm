@@ -34,7 +34,6 @@ our $CurDomain;
 our $CurProtocol;
 our $ErrorDisplayed = 0;
 
-
 #Main method which is called right at the start to populate all the variables in this file.
 sub InitialActionsGlobals
 {	
@@ -121,7 +120,7 @@ sub InitialiseInputLabels
 	$InputLabels{Globals_Constants::INPUT_ENTRY_TITLE()} = "entry title";
 	$InputLabels{Globals_Constants::INPUT_ENTRY_BODY()} = "entry body";
 	$InputLabels{Globals_Constants::INPUT_ENTRY_URL()} = "entry url";
-	$InputLabels{Globals_Constants::INPUT_LIMIT_ENTRIES()} = "maximum number of new entries";
+	$InputLabels{Globals_Constants::INPUT_LIMIT_ENTRIES()} = "maximum number of entries";
 }
  
 #Populates all the variables used internally to ease the management of the main input variables/constants.  
@@ -163,6 +162,13 @@ sub InitialiseHTML()
 	$HTMLTags{Globals_Constants::HTML_ENTITY_EM()} = "em";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_STRONG()} = "strong";	
 	$HTMLTags{Globals_Constants::HTML_ENTITY_TABLE()} = "table";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_TR()} = "tr";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_TD()} = "td";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_TH()} = "th";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_THEAD()} = "thead";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_TBODY()} = "tbody";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_TFOOT()} = "tfoot";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_CAPTION()} = "caption";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_INPUT()} = "input";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_FORM()} = "form";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_UL()} = "ul";

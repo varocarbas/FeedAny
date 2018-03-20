@@ -40,7 +40,8 @@ sub GetInput
 {
 	my $filePath = $_[0];
 
-	my @lines = IO::FileLinesToArray($Globals_Variables::InputDir . $filePath);		
+	my @lines = IO::FileLinesToArray($Globals_Variables::InputDir . $filePath);
+	
 	if (scalar(@lines) < 1)
 	{
 		{
@@ -48,7 +49,7 @@ sub GetInput
 			
 			if (!$Globals_Variables::ErrorDisplayed)
 			{
-				Errors::ShowError("There was an error while reading \"" . $filePath . "\".");	
+				Errors::ShowError(Globals_Constants::ERROR_IO_FILE_READ(), $filePath);
 			}			
 		}
 		

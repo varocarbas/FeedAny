@@ -90,13 +90,7 @@ sub AddTempInput
 
 			if (exists $outInputs{$type})
 			{
-				Errors::ShowError
-				(
-					Errors::GetErrorMessage
-					(
-						Globals::ERROR_INPUT_LABEL_REPEATED(), $label
-					)
-				);
+				Errors::ShowError(Globals::ERROR_INPUT_LABEL_REPEATED(), $label);
 			}
 			else
 			{
@@ -112,10 +106,7 @@ sub AddTempInput
 				{
 					if (Accessory::IndexOfArray(\@Globals::InputLabelsBasic, $type) > -1)
 					{
-						$error = Errors::GetErrorMessage
-						(
-							Constants::ERROR_INPUT_VALUE_FORMAT(), $label
-						);		
+						Errors::ShowError(Constants::ERROR_INPUT_VALUE_FORMAT(), $label);		
 					}
 					else { next; }
 				}

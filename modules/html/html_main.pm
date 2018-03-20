@@ -8,10 +8,7 @@ sub GetHTML
 
     if (length(Accessory::Trim($contents)) < 1)
 	{
-		Errors::ShowError
-		(
-			Errors::GetErrorMessage(Globals_Constants::ERROR_HTML_GRABBING())
-		);
+		Errors::ShowError(Globals_Constants::ERROR_HTML_GRABBING());
 	}
 
 	return $contents;

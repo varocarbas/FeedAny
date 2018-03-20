@@ -22,7 +22,6 @@ sub GetOutput
 	);
 	if (scalar(@entries) == 0) { return undef; }
 	
-
 	return Output->Instantiate
 	(
 		"Name" => $input->{"Name"}, "Entries" => \@entries, "URL" => $url

@@ -8,7 +8,7 @@ sub ShowError
 		$filePath = $Globals_Variables::RootPath . $Globals_Variables::IONames{Globals_Constants::IO_ERRORS_FILE()};
 	}
 	
-	my $message = "ERROR --- " . $_[0] . "\n";
+	my $message = "ERROR --- " . GetErrorMessage($_[0], $_[1]) . "\n";
 	
 	if (!IO::TextToFile($message, $filePath))
 	{
@@ -32,7 +32,6 @@ sub GetErrorMessage
 {
 	my $id = $_[0];
 	my $input = (scalar(@_) > 1 ? $_[1] : "");
-	my $input2 = (scalar(@_) > 2 ? $_[2] : "");
 	my $message = "";
 	
 	if ($id == Globals_Constants::ERROR_INPUT_LABEL_REPEATED())
@@ -70,9 +69,16 @@ sub GetErrorMessage
 		
 		$message .= ").";
 	}
-	elsif ($id == Globals_Constants::ERROR_HTML_GRABBING())
+	else
 	{
-		$message = "There was an error while retrieving the HTML code from " . $input . ".";		
+		my $bit = undef;
+		
+		if ($id == Globals_Constants::ERROR_HTML_GRABBING()) { $bit = "retrieving the HTML code from"; }
+		elsif ($id == Globals_Constants::ERROR_IO_FILE_DELETE()) { $bit = "deleting"; }
+		elsif ($id == Globals_Constants::ERROR_IO_FILE_READ()) { $bit = "reading"; }
+		elsif ($id == Globals_Constants::ERROR_IO_FILE_WRITE()) { $bit = "writing"; }
+		
+		if (defined($bit)) { $message = "There was an error while " . $bit . " \"" . $input . "\"."; }
 	}
 	
 	return $message;

@@ -15,7 +15,7 @@ sub InitialActionsIO
 			if (-e $path)
 			{
 				eval { unlink($path); };
-				if ($@) { ShowError("There was an error while trying to delete \"" . $path . "\"."); }
+				if ($@) { Errors::ShowError(Globals_Constants::ERROR_IO_FILE_DELETE(), $filePath); }
 			}
 		}		
 	}
@@ -38,7 +38,7 @@ sub FileLinesToArray
 	
 	if ($@)
 	{
-		Errors::ShowError("There was an error while reading \"" . $filePath . "\".");
+		Errors::ShowError(Globals_Constants::ERROR_IO_FILE_READ(), $filePath);
 		@lines = ();		
 	}
 	
@@ -62,11 +62,11 @@ sub FileLinesToArray
 	
 	if ($@)
 	{
-		Errors::ShowError("There was an error while writing to \"" . $filePath . "\".");
+		Errors::ShowError(Globals_Constants::ERROR_IO_FILE_WRITE(), $filePath);
 		$isOK = 0;
 	}
 	
 	return $isOK;
  }
-
+ 
  1;
