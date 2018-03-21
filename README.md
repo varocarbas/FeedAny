@@ -8,7 +8,7 @@ FeedAny generates web feeds from random pages via HTML parsing. The target web p
 
 ## Quick start guide
 
-- Make sure that your machine supports Perl 5.
+- Make sure that both Perl and Wget are installed on your machine.
 - Include as many input files (*.fa) as you wish in the root "inputs" folder. 
 - Run FeedAny (e.g., type "perl FeedAny.pl" in the command line).
 - Use the files generated in the root "outputs" folder as you would use any web feed.
