@@ -19,7 +19,7 @@ All the input files are expected to follow these rules:
 - The titles (before ":") aren't supposed to be modified.
 - The input values (after ":") have to verify the corresponding format as suggested by the title: URL, HTML or integer numeric.
 - URLs have to be valid and to start with "http://" or "https://".
-- Only [supported HTML entities](https://github.com/varocarbas/FeedAny/blob/master/modules/globals/globals_variables.pm) can be used. The attributes might be anything, but their values have to be surrounded by quotes (e.g., ```<div attribute='value'>```). Only opening tags are expected. It is possible to include various nested entities (e.g., ```<div attr="whatever"><a>```).
+- Only [supported HTML entities](https://customsolvers.com/downloads/feed_any/supported_html_entities.txt) can be used. The attributes might be anything, but their values have to be surrounded by quotes (e.g., ```<div attribute='value'>```). Only opening tags are expected. It is possible to include various nested entities (e.g., ```<div attr="whatever"><a>```).
 
 ## Practical example
 
