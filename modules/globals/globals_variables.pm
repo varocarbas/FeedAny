@@ -159,6 +159,12 @@ sub InitialiseHTML()
 	$HTMLTags{Globals_Constants::HTML_ENTITY_B()} = "b";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_I()} = "i";	
 	$HTMLTags{Globals_Constants::HTML_ENTITY_H()} = "h";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_H1()} = "h1";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_H2()} = "h2";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_H3()} = "h3";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_H4()} = "h4";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_H5()} = "h5";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_H6()} = "h6";	
 	$HTMLTags{Globals_Constants::HTML_ENTITY_EM()} = "em";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_STRONG()} = "strong";	
 	$HTMLTags{Globals_Constants::HTML_ENTITY_TABLE()} = "table";
