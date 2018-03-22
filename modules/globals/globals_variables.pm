@@ -194,8 +194,8 @@ sub InitialiseHTML()
 #Populates all the parsing related variables.
 sub InitialiseParse()
 {
-	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()} = 5;
-	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_GLOBAL()} = 10;
+	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()} = 25;
+	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_GLOBAL()} = 50;
 }
 
 #Constraints used by all the parsing algorithms (e.g., the ones preventing infinite loop when parsing wrong HTML code).
