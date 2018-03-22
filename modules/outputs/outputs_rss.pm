@@ -147,7 +147,10 @@ sub AddRSSEntry
 		}
 	}
 	
-	$outEntry .= AddRSSEntryLine($url, $indentLevels[1], Globals_Constants::RSS_ENTRY_GUID(), 0);	
+	$outEntry .= AddRSSEntryLine($url, $indentLevels[1], Globals_Constants::RSS_ENTRY_GUID(), 0);
+
+	#Simple and efficient way to avoid any date-related hassle when dealing with feeds-managing software.
+	$outEntry .= AddRSSEntryLine("Sat, 01 Jan 2000 00:00:00 +0100", $indentLevels[1], Globals_Constants::RSS_ENTRY_DATE(), 0);
 	
 	return ($outEntry . AddRSSEntryLine("</item>", $indentLevels[0]));
 }

@@ -52,8 +52,16 @@ sub FindEntityMainDefinitionInternalFirst
 	}
 	else
 	{
-		while(1)
+		my $count = 0;
+		my $maxCount;
 		{
+			no warnings "once";
+			$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};
+		}
+
+		while ($count < $maxCount)
+		{
+			$count++;
 			my $tempI = Accessory::IterateThroughStringWhile($html, $length, " ", $i - 1, -1);
 			if (substr($html, $tempI, 1) eq "<")
 			{
@@ -111,15 +119,8 @@ sub GetEntityOpenCloseSymbols
 		my $i = $inputs[$i0] + $factors[$i0];
 		if ($i < 0) { return (); }
 		
-		$i = Accessory::IterateThroughStringWhile
-		(
-			$html, $length, " ", $i, $factors[$i0]
-		);
-		if
-		(
-			substr($html, $i, 1) ne $targets[$i0]
-		)
-		{ return (); }
+		$i = Accessory::IterateThroughStringWhile($html, $length, " ", $i, $factors[$i0]);
+		if (substr($html, $i, 1) ne $targets[$i0]) { return (); }
 
 		$outArray[$i0] = $i;
 	}
@@ -138,9 +139,17 @@ sub GetNextEntityCloseI2s
 	my $lengthTag = $_[4];
 
 	my @outArray;
-	
-	while (1)
+
+	my $count = 0;
+	my $maxCount;
 	{
+		no warnings "once";
+		$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};
+	}
+
+	while ($count < $maxCount)
+	{
+		$count++;
 		$i = Accessory::IndexOfOutsideQuotes($html, "/", $i);
 		if ($i < 0 or $i >= $length - 2)
 		{
@@ -271,9 +280,20 @@ sub FindEntityMainDefinitionInternal
 	my $backwards = $_[4];
 	
 	my $lengthTag = length($tag);	
-
-	while(1)
+	
+	my $count0 = 0;
+	my $count = 0;
+	my $maxCount0;
+	my $maxCount;
 	{
+		no warnings "once";
+		$maxCount0 = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_GLOBAL()};
+		$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};		
+	}
+
+	while ($count < $maxCount and $count0 < $maxCount0)
+	{
+		$count++;
 		#FindEntityMainDefinitionInternalFirst returning a non-negative integer means that
 		#this is the tag name index and that the starting part is fine (i.e., "<" present).	
 		my $i = FindEntityMainDefinitionInternalFirst
@@ -285,8 +305,10 @@ sub FindEntityMainDefinitionInternal
 		my $lastI = $i + $lengthTag;
 		my $closeI = -1;
 
-		while(1)
-		{		
+		my $count2 = 0;
+		while ($count2 < $maxCount)
+		{
+			$count2++;
 			$closeI = Accessory::IndexOfOutsideQuotes($html, ">", $lastI);
 			if ($closeI < 0) { last; }
 
@@ -297,8 +319,11 @@ sub FindEntityMainDefinitionInternal
 			#required to find the closing tag. For example, finding "<div><div>text</div></div>",
 			#where the contents of the first div entity are expected to be "<div>text</div>".
 
-			while(1)
+			my $count3 = 0;
+			while ($count3 < $maxCount)
 			{
+				$count3++;
+				$count0++;
 				my @tempArray = GetNextEntityCloseI2s
 				(
 					$html, $length, $lastI, $tag, $lengthTag
@@ -355,6 +380,50 @@ sub GetEntityContentLinkFromURL
 	return undef;
 }
 
+#Improves valid-in-appearance URLs.
+sub GetEntityContentLinkFinalImprovements
+{
+	my $link = $_[0];
+	my $outlink = $link;
+	
+	my $protocol;
+	my $domain;	
+	{
+		no warnings "once";
+		$protocol = $Globals_Variables::CurProtocol;
+		$domain = $Globals_Variables::CurDomain;
+	}
+			
+	if (substr($outlink, 0, 2) eq "//")
+	{
+		#A starting "//" is usually meant to be replaced with the root url. 
+		return $protocol . $domain . "/" . substr($outlink, 2);
+	}
+	
+	my $includeDomain = 1;
+	my @domains = ("www." . $domain, $domain);
+
+	foreach my $domain (@domains)
+	{
+		if (index($outlink, $domain) == 0)
+		{
+			$includeDomain = 0;
+			last;
+		}
+	}
+	
+	if ($includeDomain)
+	{
+		#It is a relative path to which the main domain name has to be added.
+		if (substr($outlink, 0, 1) ne "/") { $outlink = "/" . $outlink; }
+		
+		$outlink = $domain . $outlink;
+	}
+	$outlink = $protocol . $outlink;
+
+	return $outlink;
+}
+
 #In some cases, the URLs aren't fully compatible with the expected format.
 #This method performs some basic corrections to minimise the chances of problems on this front.
 sub GetEntityContentLink
@@ -363,12 +432,17 @@ sub GetEntityContentLink
 	my $length = length($html);
 	
 	my $outLink = GetEntityContentLinkFromURL($html, $length);
-	if (defined($outLink)) { return $outLink; }
+	if (defined($outLink))
+	{
+		#A valid URL was found.
+		return $outLink;
+	}
 	
 	my $html2 = lc($html);
 	my $i = Accessory::IndexOfOutsideQuotes(lc($html), "href");
 	if ($i < 0) { return $outLink; }
 	
+	#Trying to extract a valid URL from the attribute which really matters: href.
 	$i = Accessory::IterateThroughStringWhile($html, $length, " ", $i + 4, 1);
 	if (substr($html, $i) != "=") { return $outLink; }
 		
@@ -376,42 +450,17 @@ sub GetEntityContentLink
 	if ($i < 0) { return $outLink; }
 	
 	my $quote = Accessory::GetUnescapedQuote($html, $i);
-	if (!defined($quote)) { next; }
+	if (!defined($quote)) { return $outLink; }
 	
 	my $i2 = index($html, $quote, $i + 1);
-	if ($i2 < 0 or $i2 < $i + 2) { return $outLink; }
 
-	$outLink = lc(substr($html, $i + 1, $i2 - $i - 1));
-	
-	my $includeDomain = 1;
-	my @domains = ("www." . $Globals_Variables::CurDomain, $Globals_Variables::CurDomain);
-
-	foreach my $domain (@domains)
-	{
-		if (index($outLink, $domain) == 0)
-		{
-			$includeDomain = 0;
-			last;
-		}
-	}
-
-	{
-		no warnings "once";
-
-		if ($includeDomain)
-		{
-			#It is a relative path to which the main domain name has to be added.
-			if (substr($outLink, 0, 1) ne "/") { $outLink = "/" . $outLink; }
-			
-			{
-				no warnings "once";
-				$outLink = $Globals_Variables::CurDomain . $outLink;
-			}
-		}
-		$outLink = $Globals_Variables::CurProtocol . $outLink;
-	}	
-
-	return $outLink;
+	return
+	(
+		$i2 < 0 or $i2 < $i + 2 ? $outLink : GetEntityContentLinkFinalImprovements
+		(
+			Accessory::Trim(substr($html, $i + 1, $i2 - $i - 1))
+		)
+	);
 }
 
 #After all the previous analyses, getting the literal entity content (between ">" and "<") is trivial.
@@ -501,8 +550,16 @@ sub GetNextAttribute
 	my $length = length($attribute);
 	my $lastI = $entity->{"LastI"};
 
-	while (1)
+	my $count = 0;
+	my $maxCount;
 	{
+		no warnings "once";
+		$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};		
+	}
+
+	while ($count < $maxCount)
+	{
+		$count++;
 		my $i = index($entity->{"HTML"}, $value, $lastI);
 		if ($i < 0)
 		{

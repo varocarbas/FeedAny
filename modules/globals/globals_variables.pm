@@ -21,6 +21,9 @@ our @Quotes;
 #Global HTML-related variables.
 our %HTMLTags;
 
+#Variables dealing with all what refers to parsing.
+our %ParseConstraints;
+
 #Secondary input information used internally to ease the management of the main input variables/constants.
 our @InputURLs;
 our @InputEntries;
@@ -42,6 +45,7 @@ sub InitialActionsGlobals
 	InitialiseInputSecondary();	
 	InitialiseSymbols();
 	InitialiseHTML();
+	InitialiseParse();
 	
 	use Cwd qw();
 	$RootPath = Cwd::cwd() . "/";
@@ -87,7 +91,8 @@ sub InitialiseRSSTags
 	$RSSTags{Globals_Constants::RSS_ENTRY_TITLE()} = "title";
 	$RSSTags{Globals_Constants::RSS_ENTRY_LINK()} = "link";
 	$RSSTags{Globals_Constants::RSS_ENTRY_GUID()} = "guid";
-	$RSSTags{Globals_Constants::RSS_ENTRY_DESCRIPTION()} = "description";	
+	$RSSTags{Globals_Constants::RSS_ENTRY_DESCRIPTION()} = "description";
+	$RSSTags{Globals_Constants::RSS_ENTRY_DATE()} = "pubDate";	
 }
 
 #Populates a hash including the RSS entries whose opening parts don't follow the standard structure "<" + tag + ">".
@@ -185,5 +190,15 @@ sub InitialiseHTML()
 	$HTMLTags{Globals_Constants::HTML_ENTITY_META()} = "meta";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_TITLE()} = "title";
 }
+
+#Populates all the parsing related variables.
+sub InitialiseParse()
+{
+	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()} = 5;
+	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_GLOBAL()} = 10;
+}
+
+#Constraints used by all the parsing algorithms (e.g., the ones preventing infinite loop when parsing wrong HTML code).
+use constant { CONSTRAINTS_PARSE_MAX_INTERNAL => 0, CONSTRAINTS_PARSE_MAX_GLOBAL => 1 };
 
 1;

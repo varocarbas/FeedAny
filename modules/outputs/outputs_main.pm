@@ -42,7 +42,11 @@ sub GetOutputEntries
 
 	my $endI = length($html) - 1;
 	my @outEntries;
-
+	
+	my $count = 0;
+	my $maxCount = ($limits{Globals_Constants::INPUT_LIMIT_ENTRIES()});
+	if ($maxCount < 1) { $maxCount = -1; }
+	
 	while (1)
 	{
 		my $entry = GetOutputEntry($htmlClass);
@@ -52,13 +56,24 @@ sub GetOutputEntries
 			or $entry->{"LastI"} > $endI
 		)
 		{ last; }
-
+		
 		$htmlClass->{"LastI"} = $entry->{"LastI"};
+				
+		my %contents = %{$entry->{"Content"}};
+		my $body = undef;
+		if (exists $contents{Globals_Constants::INPUT_ENTRY_BODY()})
+		{
+			$body = $contents{Globals_Constants::INPUT_ENTRY_BODY()};
+		}
+		if (!defined($body) or length($body) < 1) { next; }
+
 		push @outEntries, $entry;
 		
-		if (scalar(@outEntries) == $limits{Globals_Constants::INPUT_LIMIT_ENTRIES()}) { last; }
+		$count++;
+		print("Entry " . $count . "\n");
+		if ($maxCount != -1 and $count == $maxCount) { last; }
 	}
-	
+
 	return @outEntries;
 }
 
