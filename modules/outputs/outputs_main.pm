@@ -163,15 +163,6 @@ sub GetOutputEntry
 		}
 		else { $outContent{$input} = ""; }
 	}
-
-	if (!exists $outContent{Globals_Constants::INPUT_ENTRY_URL})
-	{
-		$outContent
-		{
-			Globals_Constants::INPUT_ENTRY_URL
-		}
-		= $Globals_Variables::CurProtocol . $Globals_Variables::CurDomain;
-	}
 	
 	return Output_Entry->Instantiate("LastI" => $outI, "Content" => \%outContent);
 }

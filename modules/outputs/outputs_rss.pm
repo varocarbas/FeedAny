@@ -1,5 +1,4 @@
 package Outputs_RSS;
-use Time::Piece;
 
 #Generates the RSS code associated with the given output and writes it to the target file.
 sub GenerateOutputRSS
@@ -113,6 +112,26 @@ sub AddHTMLSupport
 	return 0;
 }
 
+#Adds the final part to the given RSS entry.
+sub AddRssEntryFinal
+{
+	my @indentLevels = @{$_[0]};
+	my $url = $_[1];
+	my @urlIDs = @{$_[2]};
+	
+	my $output = "";
+	
+	foreach my $id (@urlIDs) { $output .= AddRSSEntryLine($url, $indentLevels[1], $id, 0); }
+	
+	#Simple and efficient way to avoid any date-related hassle when dealing with feeds-managing software.
+	$output .= AddRSSEntryLine
+	(
+		"Sat, 01 Jan 2000 00:00:00 +0100", $indentLevels[1], Globals_Constants::RSS_ENTRY_DATE(), 0
+	);
+	
+	return ($output . AddRSSEntryLine("</item>", $indentLevels[0]));
+}
+
 #Returns a whole RSS entry, including all the information in the given Output_Entry instance Content.
 sub AddRSSEntry
 {
@@ -124,6 +143,7 @@ sub AddRSSEntry
 	my $outEntry = AddRSSEntryLine("<item>", $indentLevels[0]);
 	
 	my %content = %{$entry0->{"Content"}};
+	my $linkFound = 0;
 	
 	foreach $input (keys %content)
 	{
@@ -133,12 +153,12 @@ sub AddRSSEntry
 			my $id = $Globals_Variables::InputToRSS{$input};
 			my $content = $content{$input};
 			
-			if
-			(
-				$id == Globals_Constants::RSS_ENTRY_LINK() and
-				length(Accessory::Trim($content)) > 0
-			)
-			{ $url = $content; }
+			if ($id == Globals_Constants::RSS_ENTRY_LINK())
+			{
+				$linkFound = 1;
+				if (length(Accessory::Trim($content)) > 0) { $url = $content; }
+				else { $content = $url; }
+			}
 			
 			$outEntry .= AddRSSEntryLine
 			(
@@ -147,12 +167,10 @@ sub AddRSSEntry
 		}
 	}
 	
-	$outEntry .= AddRSSEntryLine($url, $indentLevels[1], Globals_Constants::RSS_ENTRY_GUID(), 0);
-
-	#Simple and efficient way to avoid any date-related hassle when dealing with feeds-managing software.
-	$outEntry .= AddRSSEntryLine("Sat, 01 Jan 2000 00:00:00 +0100", $indentLevels[1], Globals_Constants::RSS_ENTRY_DATE(), 0);
+	my @urlIDs = (Globals_Constants::RSS_ENTRY_GUID());
+	if (!$linkFound) { push @urlIDs, Globals_Constants::RSS_ENTRY_LINK(); }
 	
-	return ($outEntry . AddRSSEntryLine("</item>", $indentLevels[0]));
+	return $outEntry . AddRssEntryFinal(\@indentLevels, $url, \@urlIDs);
 }
 
 #All the RSS closing tags follow the same rules, but some of the opening ones don't.
