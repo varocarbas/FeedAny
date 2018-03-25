@@ -40,8 +40,28 @@ sub GetTempInputs
 		my %tempDict = ParseFileLine($lines[$i]);
 		if (%tempDict) { %outInputs = AddTempInput(\%outInputs, \%tempDict); }
 	}
-
+	
 	return (Inputs_Checks::InputsAreOK(\%outInputs) ? %outInputs : undef);
+}
+
+#Called accessorily while analysing the title of the given input line in ParseFileLine.
+sub GetIndexAfterInputLabel
+{
+	my $input2 = $_[0];
+	my $label = $_[1];
+	my $length = $_[2];
+
+	my $i = index($input2, $label);
+	if ($i != 0) { return -1; }
+	
+	$i = index($input2, ":");
+
+	if ($length < $i)
+	{
+		if (length(Accessory::Trim(substr($length, $i - $length))) > 0) { $i = -2; }		
+	}
+	
+	return $i + 1;
 }
 
 #Parses one line (= input) of the corresponding input file, stores the contents in a Input_Entry
@@ -49,21 +69,21 @@ sub GetTempInputs
 sub ParseFileLine
 {	
 	my $input = $_[0];
-	my $input2 = lc($input);
+	
+	my $input2 = lc(Accessory::Trim($input));
 	my %output;
 
 	foreach my $type (keys %Globals_Variables::InputLabels) 
 	{
-		my $label = $Globals_Variables::InputLabels{$type} . ":";
-		
-		my $i = index($input2, $label);
-		if ($i > 0 and length(Accessory::Trim(substr($input2, 0, $i))) > 0) { $i = -1; }
-		
+		my $label = $Globals_Variables::InputLabels{$type};
+	
+		my $i = GetIndexAfterInputLabel($input2, $label);
+
 		if ($i > -1)
 		{
 			my $item = Input_Entry->Instantiate
 			(
-				"Value" => Accessory::Trim(substr($input, $i + length($label)))
+				"Value" => Accessory::Trim(substr($input, $i))
 			);		
 			if (defined($item)) { $output{$type} = $item; }
 			
@@ -74,43 +94,38 @@ sub ParseFileLine
 	return %output;
 }
 
-
 #Adds the Input_Entry instance associated with the current line to the collection including all of them.
 sub AddTempInput
 {
 	my %outInputs = %{$_[0]};	
 	my %tempDict = %{$_[1]};
-	
+
 	foreach my $type (keys %tempDict) 
 	{
+		if (exists $outInputs{$type} and $type != Globals_Constants::INPUT_ENTRY_ADDITIONALS())
 		{
-			no warnings 'once';
-			
-			my $label = $Globals_Variables::InputLabels{$type};
+			#Only additional entries might be repeated.
+		}
 
-			if (exists $outInputs{$type})
+		my $tempVar = Inputs_Analysis::AnalyseInputValue($tempDict{$type}->{"Value"}, $type);
+		if (defined($tempVar))
+		{
+			%outInputs = AddEntryValues(\%outInputs, $type, $tempVar);
+		}
+		else
+		{
 			{
-				Errors::ShowError(Globals::ERROR_INPUT_LABEL_REPEATED(), $label);
+				no warnings 'once';
+				
+				if (Accessory::IndexOfArray(\@Globals::InputLabelsBasic, $type) > -1)
+				{
+					Errors::ShowError
+					(
+						Constants::ERROR_INPUT_VALUE_FORMAT(), $Globals_Variables::InputLabels{$type}
+					);		
+				}
+				else { next; }					
 			}
-			else
-			{
-				$outInputs{$type} = $tempDict{$type};
-
-				my $tempVar = Inputs_Analysis::AnalyseInputValue($tempDict{$type}->{"Value"}, $type);
-				if (defined($tempVar))
-				{
-					$outInputs{$type} = $tempDict{$type};
-					$outInputs{$type}->{"Value"} = $tempVar;
-				}
-				else
-				{
-					if (Accessory::IndexOfArray(\@Globals::InputLabelsBasic, $type) > -1)
-					{
-						Errors::ShowError(Constants::ERROR_INPUT_VALUE_FORMAT(), $label);		
-					}
-					else { next; }
-				}
-			}		
 		}
 	}
 
@@ -154,17 +169,16 @@ sub GetInputCollectionEntries
 	{
 		no warnings "once";
 
-		foreach my $entry (@Globals_Variables::InputEntries)
+		foreach my $type (@Globals_Variables::InputEntries)
 		{
-			if (defined($entries{$entry}->{"Value"}))
-			{
-							
-				my $value = Accessory::Trim($entries{$entry}->{"Value"});
-				if (length($value) > 0)
-				{
-					$outEntries{$entry}->{"Value"} = $value;
-				}				
-			}
+			 %outEntries = AddEntryValues
+			 (
+				\%outEntries, $type,
+				(
+					$type == Globals_Constants::INPUT_ENTRY_ADDITIONALS() ?
+					\@{$entries{$type}->{"Array"}} : $entries{$type}->{"Value"}
+				)
+			);	 
 		}		
 	}
 	
@@ -189,6 +203,42 @@ sub GetInputCollectionSimple
 	}
 	
 	return %output;	
+}
+
+#Add the corresponding entry value by accounting for two possible scenarios: single vs. multiple.
+sub AddEntryValues
+{
+	my %allInputs = %{$_[0]};
+	my $type = $_[1];
+	my $value = $_[2];	
+	
+	if ($type == Globals_Constants::INPUT_ENTRY_ADDITIONALS())
+	{
+		if (ref($value) eq 'ARRAY')
+		{
+			@{$allInputs{Globals_Constants::INPUT_ENTRY_ADDITIONALS()}->{"Array"}} = @{$value};
+		}
+		else
+		{
+			push @{$allInputs{Globals_Constants::INPUT_ENTRY_ADDITIONALS()}->{"Array"}}, $value;			
+		}
+	}
+	else { $allInputs{$type}->{"Value"} = $value; }	
+	
+	return %allInputs;
+}
+
+#Gets the corresponding entry value by accounting for two possible scenarios: single vs. multiple.
+sub GetEntryValues
+{
+	my $input = $_[0];
+	my $type = $_[1];
+	
+	return
+	(
+		$type == Globals_Constants::INPUT_ENTRY_ADDITIONALS() ?
+		@{$input->{"Array"}} : $input->{"Value"}
+	);
 }
 
 1;

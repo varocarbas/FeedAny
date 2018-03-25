@@ -13,7 +13,10 @@ use constant { RSS_FORMAT_HEADING => 0, RSS_FORMAT_VERSION => 1, RSS_FORMAT_ATOM
 use constant { RSS_ENTRY_TITLE => 0, RSS_ENTRY_LINK => 1, RSS_ENTRY_GUID => 2, RSS_ENTRY_DESCRIPTION => 3, RSS_ENTRY_DATE => 4 };
 
 #Types of fields in the input files, one per line.
-use constant { INPUT_URL_MAIN => 0, INPUT_ENTRY_TITLE => 1, INPUT_ENTRY_BODY => 2, INPUT_ENTRY_URL => 3, INPUT_LIMIT_ENTRIES => 4 };
+use constant
+{
+	INPUT_URL_MAIN => 0, INPUT_ENTRY_TITLE => 1, INPUT_ENTRY_BODY => 2, INPUT_ENTRY_URL => 3, INPUT_LIMIT_ENTRIES => 4, INPUT_ENTRY_ADDITIONALS => 5
+};
 
 #All the different categories accounted by the HTML parsing code.
 use constant { HTML_TYPE_ENTITY => 0, HTML_TYPE_ATTRIBUTE => 1 };

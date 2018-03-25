@@ -126,6 +126,7 @@ sub InitialiseInputLabels
 	$InputLabels{Globals_Constants::INPUT_ENTRY_BODY()} = "entry body";
 	$InputLabels{Globals_Constants::INPUT_ENTRY_URL()} = "entry url";
 	$InputLabels{Globals_Constants::INPUT_LIMIT_ENTRIES()} = "maximum number of entries";
+	$InputLabels{Globals_Constants::INPUT_ENTRY_ADDITIONALS()} = "entry additional";	
 }
  
 #Populates all the variables used internally to ease the management of the main input variables/constants.  
@@ -136,6 +137,7 @@ sub InitialiseInputSecondary
 	push @InputEntries, Globals_Constants::INPUT_ENTRY_TITLE();
 	push @InputEntries, Globals_Constants::INPUT_ENTRY_BODY();
 	push @InputEntries, Globals_Constants::INPUT_ENTRY_URL();
+	push @InputEntries, Globals_Constants::INPUT_ENTRY_ADDITIONALS();
 	
 	push @InputLimits, Globals_Constants::INPUT_LIMIT_ENTRIES();
 	

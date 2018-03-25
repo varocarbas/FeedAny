@@ -123,10 +123,10 @@ sub AddRssEntryFinal
 	
 	foreach my $id (@urlIDs) { $output .= AddRSSEntryLine($url, $indentLevels[1], $id, 0); }
 	
-	#Simple and efficient way to avoid any date-related hassle when dealing with feeds-managing software.
+	use POSIX qw(strftime);
 	$output .= AddRSSEntryLine
 	(
-		"Sat, 01 Jan 2000 00:00:00 +0100", $indentLevels[1], Globals_Constants::RSS_ENTRY_DATE(), 0
+		strftime("%a, %d %b %Y %H:%M:%S %z", localtime(time())), $indentLevels[1], Globals_Constants::RSS_ENTRY_DATE(), 0
 	);
 	
 	return ($output . AddRSSEntryLine("</item>", $indentLevels[0]));

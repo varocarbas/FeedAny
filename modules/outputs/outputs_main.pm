@@ -35,10 +35,10 @@ sub GetOutputEntries
 	my %inputs = %{$_[1]};
 	my %limits = %{$_[2]};
 
-	my %targets = GetOutputEntriesTargets(\%inputs);
-	if (scalar(keys %targets) == 0) { return (); }
-
-	my $htmlClass = Html->Instantiate("HTML" => $html, "Targets" => \%targets);
+	my $htmlClass = Html->Instantiate("HTML" => $html);
+	
+	$htmlClass = GetOutputEntriesTargets(\%inputs, $htmlClass);
+	if (scalar(keys %{$htmlClass->{"Targets"}}) == 0) { return (); }
 
 	my $endI = length($html) - 1;
 	my @outEntries;
@@ -83,24 +83,54 @@ sub GetOutputEntries
 sub GetOutputEntriesTargets
 {	
 	my %inputs = %{$_[0]};
-	my %targets;
+	my $outClass = $_[1];
 	
-	foreach my $key (keys %inputs)
+	my %targets;
+	my %targetsAdditional;
+	
+	foreach my $type (keys %inputs)
 	{
-		my @target = HTML_Parse_Inputs::CreateEntityClassesFromInput($inputs{$key}->{"Value"});
-		if (scalar(@target) == 0) { next; }
+		my @values;
+		
+		if ($type == Globals_Constants::INPUT_ENTRY_ADDITIONALS())
+		{
+			@values = Inputs_Store::GetEntryValues($inputs{$type}, $type);
+		}
+		else { push @values, Inputs_Store::GetEntryValues($inputs{$type}, $type); }
 
-		@{$targets{$key}} = @target;	
+		my @targets2;
+		
+		foreach my $value (@values)
+		{
+			my @target = HTML_Parse_Inputs::CreateEntityClassesFromInput($value);
+			
+			if (scalar(@target) > 0) { push @targets2, \@target; }
+		}
+		if (scalar(@targets2) == 0) { next; }
+		
+		for (my $i = 0; $i < scalar(@targets2); $i++)
+		{
+			if ($type == Globals_Constants::INPUT_ENTRY_ADDITIONALS())
+			{
+				@{$targetsAdditional{$i}} = @{$targets2[$i]};
+			}
+			else { @{$targets{$type}} = @{$targets2[$i]}; }
+		}
 	}
 
-	return %targets;	
+	%{$outClass->{"Targets"}} = %targets;
+	%{$outClass->{"TargetsAdditional"}} = %targetsAdditional;	
+	
+	return $outClass;	
 }
 
-#Returns the Output_Entry associated with the input information.
-sub GetOutputEntry
+#Returns the content associated with the given Output_Entry instance by accounting for the difference
+#normal/additional input entries.
+sub GetOutputEntryContent
 {	
 	my $htmlClass = $_[0];
-	my %targets0 = %{$htmlClass->{"Targets"}};
+	my $isAdditional = $_[1];
+	my %targets0 = %{($isAdditional ? $htmlClass->{"TargetsAdditional"} : $htmlClass->{"Targets"})};
 	
 	my @inputs = (keys %targets0);
 	my $maxInputs = scalar(@inputs) - 1;
@@ -116,9 +146,8 @@ sub GetOutputEntry
 	#is relevant outside this method. The variable $addI is precisely meant to take care of this correction.
 	my $addI = 0;
 	
-	for ($i0 = 0; $i0 <= $maxInputs; $i0++)
+	foreach my $input (keys %targets0)
 	{
-		my $input = $inputs[$i0];
 		my @targets = @{$targets0{$input}};
 		my $maxTargets = scalar(@targets) - 1;
 		
@@ -136,7 +165,10 @@ sub GetOutputEntry
 			$addI = $htmlClass->{"LastI"};
 			my $html = substr($htmlClass->{"HTML"}, $htmlClass->{"LastI"});
 			
-			$entity = HTML_Parse_Entities::MatchEntityToTarget($html, $targets[$i1], $input);
+			$entity = HTML_Parse_Entities::MatchEntityToTarget
+			(
+				$html, $targets[$i1], ($isAdditional ? -1 : $input)
+			);
 			if (!defined($entity) or !defined($entity->{"CloseI"}))
 			{
 				#There is no possible match for this target in the current HTML code.
@@ -165,6 +197,34 @@ sub GetOutputEntry
 	}
 	
 	return Output_Entry->Instantiate("LastI" => $outI, "Content" => \%outContent);
+}
+
+#Returns the Output_Entry associated with the input information.
+sub GetOutputEntry
+{
+	my $htmlClass = $_[0];
+	
+	my $outEntry = GetOutputEntryContent($htmlClass, 0);
+	
+	if (scalar(keys %{$htmlClass->{"TargetsAdditional"}}) > 0)
+	{
+		my $tempVar = GetOutputEntryContent($htmlClass, 1);
+		
+		my %additionals = %{$tempVar->{"Content"}};
+		my %content = %{$outEntry->{"Content"}};
+		
+		foreach my $key (keys %additionals)
+		{
+			$content
+			{
+				Globals_Constants::INPUT_ENTRY_BODY()
+			}
+			.= "<br/><br/>[ADDITIONAL]<br/>" . $additionals{$key};
+		}
+		%{$outEntry->{"Content"}} = %content;
+	}
+	
+	return $outEntry;
 }
 
 1;

@@ -17,6 +17,9 @@ sub Instantiate
 	#the HTML code <a title='title'><p> would be represented with two entities, a (attribute title->"title") and p (no attibute),
 	#stored in the Targets array with the indices 0 and 1 respectively.	
 	%{$instance->{"Targets"}} = (defined($params{"Targets"}) ? %{$params{"Targets"}} : ());
+	
+	#Equivalent to Targets, but for the additional input entries.
+	%{$instance->{"TargetsAdditional"}} = (defined($params{"TargetsAdditional"}) ? %{$params{"TargetsAdditional"}} : ());
 	 
 	bless $instance, $type;  
 }
