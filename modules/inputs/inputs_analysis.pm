@@ -4,7 +4,7 @@ package Inputs_Analysis;
 sub GetInputs
 {
 	my @inputs;
-	
+
 	my $extension;
 	{
 		no warnings "once";
@@ -26,7 +26,7 @@ sub GetInputs
 		if ($length < $lengthExt || index(lc($file), $extension) != $length - $lengthExt) { next; }
 
 		my $input = GetInput($file);
-		
+
 		if (defined($input)) { push @inputs, $input; }
 	}
 

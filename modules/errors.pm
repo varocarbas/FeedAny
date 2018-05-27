@@ -34,15 +34,11 @@ sub GetErrorMessage
 	my $input = (scalar(@_) > 1 ? $_[1] : "");
 	my $message = "";
 	
-	if ($id == Globals_Constants::ERROR_INPUT_LABEL_REPEATED())
-	{
-		$message = "The label \"" . $input . "\" is repeated."
-	}
-	elsif ($id == Globals_Constants::ERROR_INPUT_VALUE_FORMAT())
+	if ($id eq Globals_Constants::ERROR_INPUT_VALUE_FORMAT())
 	{
 		$message = "The input value for \"" . $input . "\" doesn't match the expected format.";
 	}
-	elsif ($id == Globals_Constants::ERROR_INPUT_BASIC())
+	elsif ($id eq Globals_Constants::ERROR_INPUT_BASIC())
 	{
 		{
 			no warnings 'once';
@@ -55,7 +51,7 @@ sub GetErrorMessage
 		
 		for (my $i = 0; $i <= $i_max; $i++)
 		{
-			if ($i > 0) { $message .= ($i == $i_max ? " and" : ",") . " "; }
+			if ($i > 0) { $message .= ($i eq $i_max ? " and" : ",") . " "; }
 			
 			{
 				no warnings 'once';
@@ -73,10 +69,10 @@ sub GetErrorMessage
 	{
 		my $bit = undef;
 		
-		if ($id == Globals_Constants::ERROR_HTML_GRABBING()) { $bit = "retrieving the HTML code from"; }
-		elsif ($id == Globals_Constants::ERROR_IO_FILE_DELETE()) { $bit = "deleting"; }
-		elsif ($id == Globals_Constants::ERROR_IO_FILE_READ()) { $bit = "reading"; }
-		elsif ($id == Globals_Constants::ERROR_IO_FILE_WRITE()) { $bit = "writing"; }
+		if ($id eq Globals_Constants::ERROR_HTML_GRABBING()) { $bit = "retrieving the HTML code from"; }
+		elsif ($id eq Globals_Constants::ERROR_IO_FILE_DELETE()) { $bit = "deleting"; }
+		elsif ($id eq Globals_Constants::ERROR_IO_FILE_READ()) { $bit = "reading"; }
+		elsif ($id eq Globals_Constants::ERROR_IO_FILE_WRITE()) { $bit = "writing"; }
 		
 		if (defined($bit)) { $message = "There was an error while " . $bit . " \"" . $input . "\"."; }
 	}

@@ -15,7 +15,7 @@ use constant { RSS_ENTRY_TITLE => 0, RSS_ENTRY_LINK => 1, RSS_ENTRY_GUID => 2, R
 #Types of fields in the input files, one per line.
 use constant
 {
-	INPUT_URL_MAIN => 0, INPUT_ENTRY_TITLE => 1, INPUT_ENTRY_BODY => 2, INPUT_ENTRY_URL => 3, INPUT_LIMIT_ENTRIES => 4, INPUT_ENTRY_ADDITIONALS => 5
+	INPUT_URL_MAIN => 0, INPUT_ENTRY_TITLE => 1, INPUT_ENTRY_BODY => 2, INPUT_ENTRY_URL => 3, INPUT_ENTRY_LIMIT => 4, INPUT_ENTRY_ADDITIONALS => 5
 };
 
 #All the different categories accounted by the HTML parsing code.
@@ -32,14 +32,23 @@ use constant
 	HTML_ENTITY_META => 30, HTML_ENTITY_TITLE => 31
 };
 
+#Constraints eventually accounted while analysing the input strings.
+#Note that the order (= integer value) matters here: the higher number of words, longer those words, the bigger value.
+#This is relevant while iterating through the elements of the hash including the associated strings (Globals_Variables::InputConstraints), to make sure that all the
+#scenarios are understood properly (e.g., "not contains" misunderstood as "contains").
+use constant { CONSTRAINTS_INPUT_EQUAL => 0, CONSTRAINTS_INPUT_CONTAINS => 1, CONSTRAINTS_INPUT_NOT_EQUAL => 2, CONSTRAINTS_INPUT_NOT_CONTAINS => 3 };
+
 #Constraints used by all the parsing algorithms (e.g., the ones preventing infinite loop when parsing wrong HTML code).
-use constant { CONSTRAINTS_PARSE_MAX_INTERNAL => 0, CONSTRAINTS_PARSE_MAX_GLOBAL => 1 };
+use constant { LIMITS_PARSE_MAX_INTERNAL => 0, LIMITS_PARSE_MAX_GLOBAL => 1, LIMITS_RSS_MAX_LENGTH => 2, LIMITS_INPUT_MAX_ENTRIES => 3 };
+
+#Operators used in some scenarios (e.g., linking input constraints).
+use constant { OPERATORS_LOGICAL_AND => 0, OPERATORS_LOGICAL_OR => 1 };
 
 #All error types.
 use constant
 {
-	ERROR_INPUT_LABEL_REPEATED => 0, ERROR_INPUT_VALUE_FORMAT => 1, ERROR_INPUT_BASIC => 2, ERROR_HTML_GRABBING => 3,
-	ERROR_IO_FILE_DELETE => 4, ERROR_IO_FILE_READ => 5, ERROR_IO_FILE_WRITE => 6
+	ERROR_INPUT_VALUE_FORMAT => 0, ERROR_INPUT_BASIC => 1, ERROR_HTML_GRABBING => 2, ERROR_IO_FILE_DELETE => 3,
+	ERROR_IO_FILE_READ => 4, ERROR_IO_FILE_WRITE => 5
 };
 
 1;

@@ -96,7 +96,7 @@ sub CreateEntityClassFromInputGetAttribute
 	}
 	
 	my @quotes = CreateEntityClassFromInputGetQuotes($beforeAfter[1]);
-	if (scalar(@quotes) == 0)
+	if (scalar(@quotes) eq 0)
 	{
 		#Reaching this point means that there is something different than
 		#two identical (' or ") unescaped quotes.
@@ -130,15 +130,15 @@ sub CreateEntityClassFromInputGetAttributes
 	return %{$class->{"Attributes"}};
 }
 
-#Performs the main actions to convert the string inputs into the HTML_Instance which will be
-#used during the analyses.
+#Performs the main actions to convert the HTML code (string) of the given input entry into the array of HTML_Entity instances which will be
+#used during the subsequent analyses. Note that it is expected to be stored in an Html_Target instance, under "Entities". 
 sub CreateEntityClassesFromInput
 {
 	my $input = $_[0];
 	if (!defined($input) or length($input) < 1) { return (); }
 
 	my @tempArray = CreateEntityClassFromInputFirstActions($input);
-	if (scalar(@tempArray) == 0) { return (); }	
+	if (scalar(@tempArray) eq 0) { return (); }	
 
 	my @outEntities;
 

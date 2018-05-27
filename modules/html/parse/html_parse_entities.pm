@@ -56,7 +56,7 @@ sub FindEntityMainDefinitionInternalFirst
 		my $maxCount;
 		{
 			no warnings "once";
-			$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};
+			$maxCount = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()};
 		}
 
 		while ($count < $maxCount)
@@ -144,7 +144,7 @@ sub GetNextEntityCloseI2s
 	my $maxCount;
 	{
 		no warnings "once";
-		$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};
+		$maxCount = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()};
 	}
 
 	while ($count < $maxCount)
@@ -163,7 +163,7 @@ sub GetNextEntityCloseI2s
 			@outArray = ($i, $i2 + $lengthTag - 1);
 		}
 		
-		if (scalar(@outArray) == 0)
+		if (scalar(@outArray) eq 0)
 		{
 			$i2 = Accessory::IterateThroughStringWhile($html, $length, " ", $i - 1, -1);
 			if ($i2 >= $lengthTag and substr($html, $i2 - $lengthTag + 1 , $lengthTag) eq $tag)
@@ -172,10 +172,10 @@ sub GetNextEntityCloseI2s
 			}				
 		}
 		
-		if (scalar(@outArray) == 2)
+		if (scalar(@outArray) eq 2)
 		{
 			@outArray = GetEntityOpenCloseSymbols($html, $length, \@outArray);
-			if (scalar(@outArray) == 2) { last; }
+			if (scalar(@outArray) eq 2) { last; }
 		}
 		
 		$i++;
@@ -267,7 +267,7 @@ sub NestedEntitiesWithinAreOK
 	#Finding an even number of open/close tags for the target entity would mean that everything is
 	#OK and that the initial assumption regarding the closing tag was right. On the other hand,
 	#an uneven number would mean that a further analysis is required.
-	return ($openCloses[0] == $openCloses[1]);
+	return ($openCloses[0] eq $openCloses[1]);
 }
 
 #Called by FindEntityMainDefinition to perform some of the internal actions.
@@ -287,8 +287,8 @@ sub FindEntityMainDefinitionInternal
 	my $maxCount;
 	{
 		no warnings "once";
-		$maxCount0 = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_GLOBAL()};
-		$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};		
+		$maxCount0 = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_GLOBAL()};
+		$maxCount = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()};		
 	}
 
 	while ($count < $maxCount and $count0 < $maxCount0)
@@ -329,7 +329,7 @@ sub FindEntityMainDefinitionInternal
 					$html, $length, $lastI, $tag, $lengthTag
 				);
 
-				if (scalar(@tempArray) == 1)
+				if (scalar(@tempArray) eq 1)
 				{
 					#It was impossible to find valid CloseI2s and, consequently, this
 					#isn't a valid HTML entity. No need to go further.
@@ -384,8 +384,8 @@ sub GetEntityContentLinkFromURL
 sub GetEntityContentLinkFinalImprovements
 {
 	my $link = $_[0];
-	my $outlink = $link;
 	
+	my $outlink = $link;
 	my $protocol;
 	my $domain;	
 	{
@@ -394,18 +394,15 @@ sub GetEntityContentLinkFinalImprovements
 		$domain = $Globals_Variables::CurDomain;
 	}
 			
-	if (substr($outlink, 0, 2) eq "//")
-	{
-		#A starting "//" is usually meant to be replaced with the root url. 
-		return $protocol . $domain . "/" . substr($outlink, 2);
-	}
+	my $tempVar = substr($outlink, 0, 2);
+	if ($tempVar eq "//" or $tempVar eq "./") { return $protocol . $domain . "/" . substr($outlink, 2); }
 	
 	my $includeDomain = 1;
 	my @domains = ("www." . $domain, $domain);
 
 	foreach my $domain (@domains)
 	{
-		if (index($outlink, $domain) == 0)
+		if (index($outlink, $domain) eq 0)
 		{
 			$includeDomain = 0;
 			last;
@@ -437,15 +434,14 @@ sub GetEntityContentLink
 		#A valid URL was found.
 		return $outLink;
 	}
-	
-	my $html2 = lc($html);
+
 	my $i = Accessory::IndexOfOutsideQuotes(lc($html), "href");
 	if ($i < 0) { return $outLink; }
-	
+			
 	#Trying to extract a valid URL from the attribute which really matters: href.
 	$i = Accessory::IterateThroughStringWhile($html, $length, " ", $i + 4, 1);
-	if (substr($html, $i) != "=") { return $outLink; }
-		
+	if ($i > -1 and substr($html, $i, 1) ne "=") { return $outLink; }
+
 	$i = Accessory::IterateThroughStringWhile($html, $length, " ", $i + 1, 1);
 	if ($i < 0) { return $outLink; }
 	
@@ -453,7 +449,7 @@ sub GetEntityContentLink
 	if (!defined($quote)) { return $outLink; }
 	
 	my $i2 = index($html, $quote, $i + 1);
-
+	
 	return
 	(
 		$i2 < 0 or $i2 < $i + 2 ? $outLink : GetEntityContentLinkFinalImprovements
@@ -469,10 +465,10 @@ sub GetEntityContent
 {
 	my $entity = $_[0];
 	my $entryType = $_[1];
-	
+
 	my $outContent = undef;
 
-	if ($entryType == Globals_Constants::INPUT_ENTRY_URL())
+	if ($entryType eq Globals_Constants::INPUT_ENTRY_URL())
 	{
 		$outContent = GetEntityContentLink
 		(
@@ -500,9 +496,7 @@ sub GetEntityContent
 sub FindEntityMainDefinition
 {
 	my $entity = $_[0];
-
-	#This method can be called either to iterate backwards from a
-	#matched attribute or to go forward from a random position.
+	#This method can be called either to iterate backwards from a matched attribute or to go forward from a random position.
 	my $backwards = $_[1];
 	my $entryType = $_[2];
 	
@@ -529,7 +523,7 @@ sub FindEntityMainDefinition
 	(
 		$html, $length, $lastI, $tag, $backwards
 	);
-	if (scalar(@tempArray) == 0) { return $entity; }
+	if (scalar(@tempArray) eq 0) { return $entity; }
 
 	$entity->{"NameI"} = $tempArray[0];
 	$entity->{"CloseI"} = $tempArray[1];
@@ -554,7 +548,7 @@ sub GetNextAttribute
 	my $maxCount;
 	{
 		no warnings "once";
-		$maxCount = $Globals_Variables::ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()};		
+		$maxCount = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()};		
 	}
 
 	while ($count < $maxCount)
@@ -579,7 +573,7 @@ sub GetNextAttribute
 		(
 			$entity->{"HTML"}, $value, $entity->{"LastI"}
 		);
-		if (scalar(@tempArray) != 2) { next; }
+		if (scalar(@tempArray) ne 2) { next; }
 
 		$lastI = $tempArray[1] + 1;
 		#The target value fulfills the basic requirement of being surrounded by quotes.
@@ -694,7 +688,7 @@ sub MatchEntityToTarget
 
 			if (defined($entity->{"CloseI"}))
 			{
-				if ($i == $maxAttribute) { last; }
+				if ($i eq $maxAttribute) { last; }
 				
 				#As far as attributes don't follow any specific order, the safest starting
 				#for upcoming analysis is the entity name index (i.e., before all the attributes).

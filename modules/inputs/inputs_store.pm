@@ -1,14 +1,12 @@
 package Inputs_Store;
 
-#Instantiates the Input class variable associated with the corresponding input file and
-#stores all the required information. 
+#Instantiates the Input class variable associated with the corresponding input file and stores all the required information. 
 sub InstatiateInput
 {
-	#Getting a first version of all the collections in the Input class, namely: {"URLs"},
-	#{"Entries"} and {"Limits"}.
-	my %tempInputs = GetTempInputs(\@{$_[1]});
+	#Getting a first version of all the collections in the Input class, namely: {"URLs"}, {"Entries"} and {"Limits"}.
+	my %tempInputs = GetInputsFirst(\@{$_[1]});	
 	if (!%tempInputs) { return undef; }
-	
+
 	my $input = Input->Instantiate();
 	my $fileName = $_[0];
 
@@ -28,9 +26,8 @@ sub InstatiateInput
 }
 
 #Returns a collection with the first version of all the inputs in the given input file, one per line.
-#They are stored as instances of the Input_Entry class, even though only part of them are actually
-#input entries.
-sub GetTempInputs
+#They are stored as instances of the Input_Entry class, even though only part of them are actually input entries.
+sub GetInputsFirst
 {
 	my @lines = @{$_[0]};
 	my %outInputs;
@@ -38,9 +35,9 @@ sub GetTempInputs
 	for (my $i = 0; $i < scalar(@lines); $i++)
 	{
 		my %tempDict = ParseFileLine($lines[$i]);
-		if (%tempDict) { %outInputs = AddTempInput(\%outInputs, \%tempDict); }
+		if (%tempDict) { %outInputs = AddInputFirst(\%outInputs, \%tempDict); }
 	}
-	
+
 	return (Inputs_Checks::InputsAreOK(\%outInputs) ? %outInputs : undef);
 }
 
@@ -64,6 +61,162 @@ sub GetIndexAfterInputLabel
 	return $i + 1;
 }
 
+#Called from GetEntryFromLine to determine the point until which the line contents are relevant (i.e., where the comments start).
+sub GetEntryFromLineUptoComments
+{
+	my $input2 = $_[0];
+	
+	my $outI = -1;
+	my $found = 0;
+	
+	while (1)
+	{
+		my $tempVar = Accessory::IndexOfOutsideQuotes($input2, "//", $outI + 1);
+		if ($tempVar < 0) { last; }
+		
+		$found = 1;
+		$outI = $tempVar;
+		
+		foreach $item ("http:", "https:")
+		{
+			my $tempVar2 = length($item);
+			if (substr($input2, $tempVar - $tempVar2, $tempVar2) eq $item)
+			{
+				#This isn't a comment, but a URL.
+				$found = 0;
+				last;
+			}
+		}
+		
+		if ($found eq 1)
+		{
+			#A valid comment has been found, everything after it can be safely ignored.
+			last;
+		}
+	}
+
+	return ($found eq 0 ? -1 : $outI);
+}
+
+#Called from  GetEntryFromLineConstraints to perform accessory actions.
+sub GetEntryFromLineConstraintsInternal
+{
+	my $input = $_[0];
+	my $input2 = lc($input);	
+
+	my @output = (-1, -1);
+
+	foreach $id (keys %Globals_Variables::InputConstraints)
+	{
+		my $constraint = $Globals_Variables::InputConstraints{$id};		
+
+		$i = Accessory::IndexOfOutsideQuotes($input2, $constraint);
+		if ($i > -1 and ($output[1] eq -1 or $id > $output[1]))
+		{
+			$output[0] = $i;
+			$output[1] = $id;
+		}
+	}
+
+	return @output;
+}
+
+#Called from GetEntryFromLine to analyse eventual input constraints.
+sub GetEntryFromLineConstraints
+{
+	my $outEntry = $_[0];
+	my $input2 = $outEntry->{"Value"};
+	my $firstTime = 1;
+	my @constraints;
+
+	while (defined($input2))
+	{
+		my @tempArray = GetEntryFromLineConstraintsInternal($input2);
+		if ($tempArray[0] < 0) { last; }
+
+		my $constraint = Input_Constraint->Instantiate("ID" => $tempArray[1]);
+		$input2 = substr($input2, $tempArray[0] + length($Globals_Variables::InputConstraints{$tempArray[1]}));
+
+		if ($firstTime)
+		{
+			$firstTime = 0;
+			$outEntry->{"Value"} = Accessory::Trim(substr($outEntry->{"Value"}, 0, $tempArray[0]));
+		}
+	
+		my $length2 = length($input2);
+		my @nexts = (-1, -1);
+		
+		{
+			no warnings "once";
+			
+			foreach $id (keys %Globals_Variables::OperatorsLogical)
+			{
+				$tempVar = " " . $Globals_Variables::OperatorsLogical{$id} . " ";
+				my $i = Accessory::IndexOfOutsideQuotes($input2, $tempVar);
+				if ($i > -1)
+				{
+					$nexts[0] = $i;
+					$nexts[1] = Accessory::IterateThroughStringWhile
+					(
+						$input2, $length2, " ", $i + length($tempVar), 1
+					);
+					$constraint->{"Operator"} = $id;
+					last;
+				}
+			}				
+		}
+
+		$tempVar = $input2;
+		if ($nexts[0] > -1)
+		{
+			$tempVar = Accessory::Trim(substr($input2, 0, $nexts[0]));
+			$input2 = Accessory::Trim(substr($input2, $nexts[1]));
+		}
+		else
+		{
+			$tempVar = Accessory::Trim($tempVar);
+			$input2 = undef;
+		}
+		$tempVar = Accessory::GetElementInQuotes($tempVar, length($tempVar), 1);
+		
+		if (defined($tempVar))
+		{
+			$constraint->{"Value"} = $tempVar;
+			push @constraints, $constraint;
+		}
+	}
+
+	if (scalar(@constraints) > 0) { @{$outEntry->{"Constraints"}} = @constraints; }
+
+	return $outEntry;
+}
+
+#Method analysing the given input line and creating the corresponding Input_Entry instance.
+sub GetEntryFromLine
+{
+	my $input = $_[0];	
+	my $length = length($input);
+	
+	if ($length < 2) { return Input_Entry->Instantiate("Value" => $input); }
+	if (substr($input, 0, 2) eq "//") { return undef; }
+
+	#Index where the comments start in case of being present. Note that the returned value cannot be 0.
+	my $i = GetEntryFromLineUptoComments(lc($input));
+	my $value = Accessory::Trim($i > -1 ? substr($input, 0, $i) : $input);
+
+	my $outEntry = Input_Entry->Instantiate();
+	$outEntry->{"Value"} = $value;
+	
+	$i = index($value, " ");
+	if ($i > -1)
+	{
+		#There might be some constraints which have to be analysed.
+		$outEntry = GetEntryFromLineConstraints($outEntry);
+	}
+
+	return $outEntry;
+}
+
 #Parses one line (= input) of the corresponding input file, stores the contents in a Input_Entry
 #variable and returns it together with the given input type (e.g., Globals_Constants::INPUT_URL_MAIN).
 sub ParseFileLine
@@ -81,12 +234,9 @@ sub ParseFileLine
 
 		if ($i > -1)
 		{
-			my $item = Input_Entry->Instantiate
-			(
-				"Value" => Accessory::Trim(substr($input, $i))
-			);		
+			my $item = GetEntryFromLine(Accessory::Trim(substr($input, $i)));
+
 			if (defined($item)) { $output{$type} = $item; }
-			
 			last;
 		}
 	}
@@ -95,7 +245,7 @@ sub ParseFileLine
 }
 
 #Adds the Input_Entry instance associated with the current line to the collection including all of them.
-sub AddTempInput
+sub AddInputFirst
 {
 	my %outInputs = %{$_[0]};	
 	my %tempDict = %{$_[1]};
@@ -105,12 +255,12 @@ sub AddTempInput
 		if (exists $outInputs{$type} and $type != Globals_Constants::INPUT_ENTRY_ADDITIONALS())
 		{
 			#Only additional entries might be repeated.
+			next;
 		}
 
-		my $tempVar = Inputs_Analysis::AnalyseInputValue($tempDict{$type}->{"Value"}, $type);
-		if (defined($tempVar))
+		if (defined(Inputs_Analysis::AnalyseInputValue($tempDict{$type}->{"Value"}, $type)))
 		{
-			%outInputs = AddEntryValues(\%outInputs, $type, $tempVar);
+			%outInputs = AddEntryValues(\%outInputs, $type, $tempDict{$type});
 		}
 		else
 		{
@@ -138,23 +288,15 @@ sub UpdateInputCollections
 {	
 	my $input = $_[0];
 	my %tempInputs = %{$_[1]};
-	
+
 	{
 		no warnings 'once';
 		
-		%{$input->{"URLs"}} = GetInputCollectionSimple
-		(
-			\%tempInputs, \@Globals_Variables::InputURLs
-		);
-		
+		%{$input->{"URLs"}} = GetInputCollectionSimple(\%tempInputs, \@Globals_Variables::InputURLs);
 		%{$input->{"Entries"}} = GetInputCollectionEntries(\%tempInputs);
-				
-		%{$input->{"Limits"}} = GetInputCollectionSimple
-		(
-			\%tempInputs, \@Globals_Variables::InputLimits
-		);		
+		%{$input->{"Limits"}} = GetInputCollectionSimple(\%tempInputs, \@Globals_Variables::InputLimits);		
 	}	
-	
+
 	return $input;
 }
 
@@ -171,14 +313,9 @@ sub GetInputCollectionEntries
 
 		foreach my $type (@Globals_Variables::InputEntries)
 		{
-			 %outEntries = AddEntryValues
-			 (
-				\%outEntries, $type,
-				(
-					$type == Globals_Constants::INPUT_ENTRY_ADDITIONALS() ?
-					\@{$entries{$type}->{"Array"}} : $entries{$type}->{"Value"}
-				)
-			);	 
+			if (!exists $entries{$type}) { next; }
+
+			%outEntries = AddEntryValues(\%outEntries, $type, $entries{$type});
 		}		
 	}
 	
@@ -196,10 +333,7 @@ sub GetInputCollectionSimple
 	
 	foreach $id (@ids)
 	{
-		if (exists $tempItems{$id})
-		{
-			$output{$id} = $tempItems{$id}->{"Value"};
-		}
+		if (exists $tempItems{$id}) { $output{$id} = $tempItems{$id}->{"Value"}; }
 	}
 	
 	return %output;	
@@ -210,35 +344,16 @@ sub AddEntryValues
 {
 	my %allInputs = %{$_[0]};
 	my $type = $_[1];
-	my $value = $_[2];	
-	
-	if ($type == Globals_Constants::INPUT_ENTRY_ADDITIONALS())
+	my $entry = $_[2];	
+
+	if ($type eq Globals_Constants::INPUT_ENTRY_ADDITIONALS())
 	{
-		if (ref($value) eq 'ARRAY')
-		{
-			@{$allInputs{Globals_Constants::INPUT_ENTRY_ADDITIONALS()}->{"Array"}} = @{$value};
-		}
-		else
-		{
-			push @{$allInputs{Globals_Constants::INPUT_ENTRY_ADDITIONALS()}->{"Array"}}, $value;			
-		}
+		if (ref($entry) eq 'ARRAY') { @{$allInputs{$type}} = @{$entry}; }
+		else { push @{$allInputs{$type}}, $entry; }
 	}
-	else { $allInputs{$type}->{"Value"} = $value; }	
+	else { $allInputs{$type} = $entry; }	
 	
 	return %allInputs;
-}
-
-#Gets the corresponding entry value by accounting for two possible scenarios: single vs. multiple.
-sub GetEntryValues
-{
-	my $input = $_[0];
-	my $type = $_[1];
-	
-	return
-	(
-		$type == Globals_Constants::INPUT_ENTRY_ADDITIONALS() ?
-		@{$input->{"Array"}} : $input->{"Value"}
-	);
 }
 
 1;

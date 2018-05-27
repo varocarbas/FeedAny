@@ -14,15 +14,16 @@ our @RSSTagsHTML;
 our @RSSTagsHTMLCode;
 our %InputToRSS;
 
-#Main input information in the input files.
+#Main information associated with the input files.
 our %InputLabels;
+our %InputConstraints;
 our @Quotes;
 
 #Global HTML-related variables.
 our %HTMLTags;
 
-#Variables dealing with all what refers to parsing.
-our %ParseConstraints;
+#Hash storing all the generic limit values.
+our %GenericLimits;
 
 #Secondary input information used internally to ease the management of the main input variables/constants.
 our @InputURLs;
@@ -30,6 +31,10 @@ our @InputEntries;
 our @InputLimits;
 our @InputBasic;
 our %InputEntryVars; 
+our %OperatorsLogical;
+
+#Operators supported by some of the input scenarios (e.g., input constraints).
+use constant { OPERATORS_LOGICAL_AND => 0, OPERATORS_LOGICAL_OR => 1 };
 
 #Variables referring to information only relevant under the current conditions.
 our $CurInputFile;
@@ -45,7 +50,8 @@ sub InitialActionsGlobals
 	InitialiseInputSecondary();	
 	InitialiseSymbols();
 	InitialiseHTML();
-	InitialiseParse();
+	InitialiseLimits();
+	InitialiseInputConstraints();
 	
 	use Cwd qw();
 	$RootPath = Cwd::cwd() . "/";
@@ -125,8 +131,17 @@ sub InitialiseInputLabels
 	$InputLabels{Globals_Constants::INPUT_ENTRY_TITLE()} = "entry title";
 	$InputLabels{Globals_Constants::INPUT_ENTRY_BODY()} = "entry body";
 	$InputLabels{Globals_Constants::INPUT_ENTRY_URL()} = "entry url";
-	$InputLabels{Globals_Constants::INPUT_LIMIT_ENTRIES()} = "maximum number of entries";
+	$InputLabels{Globals_Constants::INPUT_ENTRY_LIMIT()} = "maximum number of entries";
 	$InputLabels{Globals_Constants::INPUT_ENTRY_ADDITIONALS()} = "entry additional";	
+}
+
+#Populates all the variables dealing with constraints eventually applied to the input values.
+sub InitialiseInputConstraints
+{
+	$InputConstraints{Globals_Constants::CONSTRAINTS_INPUT_EQUAL()} = "equal";
+	$InputConstraints{Globals_Constants::CONSTRAINTS_INPUT_NOT_EQUAL()} = "not equal";
+	$InputConstraints{Globals_Constants::CONSTRAINTS_INPUT_CONTAINS()} = "contain";
+	$InputConstraints{Globals_Constants::CONSTRAINTS_INPUT_NOT_CONTAINS()} = "not contain";	
 }
  
 #Populates all the variables used internally to ease the management of the main input variables/constants.  
@@ -139,14 +154,17 @@ sub InitialiseInputSecondary
 	push @InputEntries, Globals_Constants::INPUT_ENTRY_URL();
 	push @InputEntries, Globals_Constants::INPUT_ENTRY_ADDITIONALS();
 	
-	push @InputLimits, Globals_Constants::INPUT_LIMIT_ENTRIES();
+	push @InputLimits, Globals_Constants::INPUT_ENTRY_LIMIT();
 	
 	push @InputBasic, Globals_Constants::INPUT_URL_MAIN();
 	push @InputBasic, Globals_Constants::INPUT_ENTRY_BODY();
 	
 	$InputEntryVars{Globals_Constants::INPUT_ENTRY_TITLE()} = "Title";
 	$InputEntryVars{Globals_Constants::INPUT_ENTRY_BODY()} = "Body";
-	$InputEntryVars{Globals_Constants::INPUT_ENTRY_URL()} = "Url";	
+	$InputEntryVars{Globals_Constants::INPUT_ENTRY_URL()} = "Url";
+	
+	$OperatorsLogical{Globals_Constants::OPERATORS_LOGICAL_AND()} = "and";
+	$OperatorsLogical{Globals_Constants::OPERATORS_LOGICAL_OR()} = "or";
 }
 
 #Populates the variables including other main information in the input files.
@@ -193,14 +211,13 @@ sub InitialiseHTML()
 	$HTMLTags{Globals_Constants::HTML_ENTITY_TITLE()} = "title";
 }
 
-#Populates all the parsing related variables.
-sub InitialiseParse()
+#Populates all the limit related variables.
+sub InitialiseLimits()
 {
-	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_INTERNAL()} = 25;
-	$ParseConstraints{Globals_Constants::CONSTRAINTS_PARSE_MAX_GLOBAL()} = 50;
+	$GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()} = 25;
+	$GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_GLOBAL()} = 50;
+	$GenericLimits{Globals_Constants::LIMITS_RSS_MAX_LENGTH()} = 2500;
+	$GenericLimits{Globals_Constants::LIMITS_INPUT_MAX_ENTRIES()} = 500;	
 }
-
-#Constraints used by all the parsing algorithms (e.g., the ones preventing infinite loop when parsing wrong HTML code).
-use constant { CONSTRAINTS_PARSE_MAX_INTERNAL => 0, CONSTRAINTS_PARSE_MAX_GLOBAL => 1 };
 
 1;

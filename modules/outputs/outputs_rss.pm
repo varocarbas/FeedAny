@@ -86,34 +86,30 @@ sub AddRSSEnd
 	return (AddRSSEntryLine("</channel>", 1) . AddRSSEntryLine("</rss>", 0));
 }
 
-sub AddHTMLSupport
+#Determines whether the given input string (i.e., one of the entries of the generated XML file) contains HTML code or not.
+#Note that this analysis has to account for much more than what is considered for input webpages (i.e., $Globals_Variables::HTMLTags).
+sub HasHTMLCode
 {
-	my $html = $_[0];
-	my $id = $_[1];
+	my $html = lc($_[0]);
+	my $length = $_[1];
 	
-	my $length = length($html);
+	my $i = 0;
 	
+	while(1)
 	{
-		no warnings "once";
-	
-		foreach my $tag (values %Globals_Variables::HTMLTags)
-		{
-			my $i = Accessory::IndexOfOutsideQuotes($html, $tag);
-			if ($i < 0) { next; }
-			
-			$i = Accessory::IterateThroughStringWhile($html, $length, " ", $i - 1, 1);
-			if ($i < 0 or substr($html, $i, 1) ne "<") { next; }
-			
-			$i = Accessory::IndexOfOutsideQuotes($html, ">", $i);
-			if ($i >= 0) { return 1; }
-		}			
+		$i = Accessory::IndexOfOutsideQuotes($html, "<", $i);
+		if ($i < 0 or $i >= $length - 2) { last; }
+				
+		my $i2 = Accessory::IndexOfOutsideQuotes($html, ">", $i);
+		if ($i2 >= $i + 1) { return 1; }
+		$i++;
 	}
 	
 	return 0;
 }
 
 #Adds the final part to the given RSS entry.
-sub AddRssEntryFinal
+sub AddRSSEntryFinal
 {
 	my @indentLevels = @{$_[0]};
 	my $url = $_[1];
@@ -160,17 +156,24 @@ sub AddRSSEntry
 				else { $content = $url; }
 			}
 			
-			$outEntry .= AddRSSEntryLine
-			(
-				$content, $indentLevels[1], $id, AddHTMLSupport($content, $id)
-			);			
+			my $html = 0;
+			my $length = length($content);
+			if ($length > $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_RSS_MAX_LENGTH()})
+			{
+				#A so long entry is almost certainly unintended. It was most likely provoked by a malformed HTML code.
+				$html = 1;
+				$content = substr($content, 0, $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_RSS_MAX_LENGTH()});
+			}
+			else { $html = HasHTMLCode($content, $length); }
+			
+			$outEntry .= AddRSSEntryLine($content, $indentLevels[1], $id, $html);			
 		}
 	}
 	
 	my @urlIDs = (Globals_Constants::RSS_ENTRY_GUID());
 	if (!$linkFound) { push @urlIDs, Globals_Constants::RSS_ENTRY_LINK(); }
 	
-	return $outEntry . AddRssEntryFinal(\@indentLevels, $url, \@urlIDs);
+	return $outEntry . AddRSSEntryFinal(\@indentLevels, $url, \@urlIDs);
 }
 
 #All the RSS closing tags follow the same rules, but some of the opening ones don't.

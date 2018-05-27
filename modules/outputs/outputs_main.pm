@@ -15,13 +15,13 @@ sub GetOutput
 		$Globals_Variables::CurDomain = $tempArray[0];
 		$Globals_Variables::CurProtocol = $tempArray[1];
 	}
-	
+
 	my @entries = GetOutputEntries
 	(
 		HTML_Main::GetHTML($url), \%{$input->{"Entries"}}, \%{$input->{"Limits"}}
 	);
-	if (scalar(@entries) == 0) { return undef; }
-	
+	if (scalar(@entries) eq 0) { return undef; }
+
 	return Output->Instantiate
 	(
 		"Name" => $input->{"Name"}, "Entries" => \@entries, "URL" => $url
@@ -38,24 +38,19 @@ sub GetOutputEntries
 	my $htmlClass = Html->Instantiate("HTML" => $html);
 	
 	$htmlClass = GetOutputEntriesTargets(\%inputs, $htmlClass);
-	if (scalar(keys %{$htmlClass->{"Targets"}}) == 0) { return (); }
+	if (scalar(keys %{$htmlClass->{"Targets"}}) eq 0) { return (); }
 
 	my $endI = length($html) - 1;
 	my @outEntries;
 	
 	my $count = 0;
-	my $maxCount = ($limits{Globals_Constants::INPUT_LIMIT_ENTRIES()});
+	my $maxCount = ($limits{Globals_Constants::INPUT_ENTRY_LIMIT()});
 	if ($maxCount < 1) { $maxCount = -1; }
 	
 	while (1)
 	{
 		my $entry = GetOutputEntry($htmlClass);
-		if
-		(
-			!defined($entry) or $entry->{"LastI"} < 0
-			or $entry->{"LastI"} > $endI
-		)
-		{ last; }
+		if (!defined($entry) or $entry->{"LastI"} < 0 or $entry->{"LastI"} > $endI) { last; }
 		
 		$htmlClass->{"LastI"} = $entry->{"LastI"};
 				
@@ -71,9 +66,9 @@ sub GetOutputEntries
 		
 		$count++;
 		print("Entry " . $count . "\n");
-		if ($maxCount != -1 and $count == $maxCount) { last; }
+		if ($maxCount ne -1 and $count eq $maxCount) { last; }
 	}
-
+	
 	return @outEntries;
 }
 
@@ -86,41 +81,36 @@ sub GetOutputEntriesTargets
 	my $outClass = $_[1];
 	
 	my %targets;
-	my %targetsAdditional;
 	
 	foreach my $type (keys %inputs)
 	{
-		my @values;
+		my @entries;
 		
-		if ($type == Globals_Constants::INPUT_ENTRY_ADDITIONALS())
-		{
-			@values = Inputs_Store::GetEntryValues($inputs{$type}, $type);
-		}
-		else { push @values, Inputs_Store::GetEntryValues($inputs{$type}, $type); }
-
+		if ($type eq Globals_Constants::INPUT_ENTRY_ADDITIONALS()) { @entries = @{$inputs{$type}}; }
+		else { push @entries, $inputs{$type}; }
+		
 		my @targets2;
 		
-		foreach my $value (@values)
+		foreach my $entry (@entries)
 		{
-			my @target = HTML_Parse_Inputs::CreateEntityClassesFromInput($value);
+			my @entities = HTML_Parse_Inputs::CreateEntityClassesFromInput($entry->{"Value"});
 			
-			if (scalar(@target) > 0) { push @targets2, \@target; }
-		}
-		if (scalar(@targets2) == 0) { next; }
-		
-		for (my $i = 0; $i < scalar(@targets2); $i++)
-		{
-			if ($type == Globals_Constants::INPUT_ENTRY_ADDITIONALS())
+			if (scalar(@entities) > 0)
 			{
-				@{$targetsAdditional{$i}} = @{$targets2[$i]};
+				push @targets2, Html_Target->Instantiate
+				(
+					"Entities" => \@entities, "Constraints" => \@{$entry->{"Constraints"}}
+				);			
 			}
-			else { @{$targets{$type}} = @{$targets2[$i]}; }
 		}
+		if (scalar(@targets2) eq 0) { next; }
+		
+		if ($type eq Globals_Constants::INPUT_ENTRY_ADDITIONALS()) { @{$targets{$type}} = @targets2; }	
+		else { $targets{$type} = $targets2[0]; }
 	}
 
 	%{$outClass->{"Targets"}} = %targets;
-	%{$outClass->{"TargetsAdditional"}} = %targetsAdditional;	
-	
+
 	return $outClass;	
 }
 
@@ -130,8 +120,9 @@ sub GetOutputEntryContent
 {	
 	my $htmlClass = $_[0];
 	my $isAdditional = $_[1];
-	my %targets0 = %{($isAdditional ? $htmlClass->{"TargetsAdditional"} : $htmlClass->{"Targets"})};
-	
+
+	my %targets0 = GetOutputEntryContentTargets(\%{$htmlClass->{"Targets"}}, $isAdditional);
+
 	my @inputs = (keys %targets0);
 	my $maxInputs = scalar(@inputs) - 1;
 
@@ -148,8 +139,10 @@ sub GetOutputEntryContent
 	
 	foreach my $input (keys %targets0)
 	{
-		my @targets = @{$targets0{$input}};
+		my @targets = @{$targets0{$input}->{"Entities"}};
 		my $maxTargets = scalar(@targets) - 1;
+		
+		my @constraints = @{$targets0{$input}->{"Constraints"}};		
 		
 		$htmlClass->{"LastI"} = $lastI0;
 		my $matched = 0;
@@ -159,26 +152,24 @@ sub GetOutputEntryContent
 		#As far as the targets are ordered from left to right, only the contents of the
 		#last sucessfully matched entity are relevant/returned.
 		my $entity;
-		
+
 		for (my $i1 = 0; $i1 <= $maxTargets; $i1++)
 		{
 			$addI = $htmlClass->{"LastI"};
 			my $html = substr($htmlClass->{"HTML"}, $htmlClass->{"LastI"});
 			
-			$entity = HTML_Parse_Entities::MatchEntityToTarget
-			(
-				$html, $targets[$i1], ($isAdditional ? -1 : $input)
-			);
+			$entity = HTML_Parse_Entities::MatchEntityToTarget($html, $targets[$i1], ($isAdditional ? -1 : $input));
 			if (!defined($entity) or !defined($entity->{"CloseI"}))
 			{
 				#There is no possible match for this target in the current HTML code.
 				last;
 			}
 			
-			if ($i1 == $maxTargets) { $matched = 1; }
+			if ($i1 eq $maxTargets) { $matched = 1; }
 			else
 			{
 				$htmlClass->{"LastI"} = $entity->{"LastI"} + $addI + 1;
+
 				if ($htmlClass->{"LastI"} >= $maxHtml or $htmlClass->{"LastI"} < 1)
 				{
 					#Some targets haven't been matched, but all the HTML code has
@@ -190,23 +181,132 @@ sub GetOutputEntryContent
 
 		if ($matched)
 		{
-			$outContent{$input} = $entity->{"Content"};
+			$outContent{$input} = GetOutputEntryContentAnalyseConstraints($entity->{"Content"}, \@constraints);
 			if ($entity->{"CloseI2"} > $outI) { $outI = $entity->{"CloseI2"} + $addI; }
 		}
 		else { $outContent{$input} = ""; }
+		
+		if (scalar(@constraints) > 0 and (!$matched or !defined($outContent{$input}) or length(Accessory::Trim($outContent{$input})) < 1))
+		{
+			#Not matching one of the targets (e.g., title) doesn't necessarily invalidate the given entry,
+			#unless it includes a constraint (e.g., only titles including whatever).			
+			$outContent{Globals_Constants::INPUT_ENTRY_BODY()} = "";
+			last;
+		}
 	}
 	
 	return Output_Entry->Instantiate("LastI" => $outI, "Content" => \%outContent);
+}
+
+#Makes sure that the content is compatible with all the constraints.
+sub GetOutputEntryContentAnalyseConstraints
+{
+	my $content = $_[0];
+	my @constraints = @{$_[1]};
+	if (scalar(@constraints) < 1) { return $content; }
+
+	my $maxI = scalar(@constraints) - 1;
+	my $operator = -1;
+
+	for ($i = 0; $i <= $maxI; $i++)
+	{
+		my $constraint = $constraints[$i];
+		if (GetOutputEntryContentConstraintIsMet($content, $constraint) eq 0)
+		{
+			if
+			(
+				$operator eq Globals_Constants::OPERATORS_LOGICAL_AND() or
+				(
+					$operator eq -1 and $i < $maxI and $constraints[$i]->{"Operator"} eq Globals_Constants::OPERATORS_LOGICAL_AND()
+				)
+			)
+			{ return ""; }
+		}
+
+		if (($i < $maxI) and ($constraints[$i]->{"Operator"} eq Globals_Constants::OPERATORS_LOGICAL_OR()))
+		{
+			#The next constraint doesn't need to be analysed.
+			$i++;
+		}
+		$operator = $constraints[$i]->{"Operator"};
+	}
+
+	return $content;
+}
+
+#Makes sure that the content is compatible with the given constraint.
+sub GetOutputEntryContentConstraintIsMet
+{
+	my $content = lc($_[0]);
+	my $constraint = $_[1];
+	
+	my $value = lc($constraint->{"Value"});
+	my $i = index($content, $value);
+	my $isMet = 0;
+	
+	if ($i < 0)
+	{
+		$isMet =
+		(
+			(
+				$constraint->{"ID"} eq Globals_Constants::CONSTRAINTS_INPUT_NOT_EQUAL() or
+				$constraint->{"ID"} eq Globals_Constants::CONSTRAINTS_INPUT_NOT_CONTAINS()
+			)
+			? 1 : 0
+		);
+	}
+	else
+	{
+		if ($constraint->{"ID"} eq Globals_Constants::CONSTRAINTS_INPUT_CONTAINS()) { $isMet = 1; }
+		elsif ($content eq $value)
+		{
+			$isMet = ($constraint->{"ID"} eq Globals_Constants::CONSTRAINTS_INPUT_EQUAL() ? 1 : 0);
+		}
+	}
+	
+	return $isMet;
+}
+
+#Returns a hash including the expected targets, either the ones associated with the additional entries or with all the other ones.
+sub GetOutputEntryContentTargets
+{
+	my %targets = %{$_[0]};
+	my $isAdditional = $_[1];
+
+	my %targetsOut;
+	
+	if ($isAdditional eq 1)
+	{
+		#The targets hash contains a Globals_Constants::INPUT_ENTRY_ADDITIONALS() entry for sure.		
+		my $i = -1;
+		foreach my $target (@{$targets{Globals_Constants::INPUT_ENTRY_ADDITIONALS()}})
+		{
+			$i++;
+			$targetsOut{$i} = $target;
+		}		
+	}
+	else
+	{
+		foreach my $key (keys %targets)
+		{
+			if ($key ne Globals_Constants::INPUT_ENTRY_ADDITIONALS())
+			{
+				$targetsOut{$key} = $targets{$key};
+			}
+		}
+	}
+	
+	return %targetsOut;
 }
 
 #Returns the Output_Entry associated with the input information.
 sub GetOutputEntry
 {
 	my $htmlClass = $_[0];
-	
+
 	my $outEntry = GetOutputEntryContent($htmlClass, 0);
-	
-	if (scalar(keys %{$htmlClass->{"TargetsAdditional"}}) > 0)
+
+	if (defined($outEntry) and GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
 	{
 		my $tempVar = GetOutputEntryContent($htmlClass, 1);
 		
@@ -225,6 +325,21 @@ sub GetOutputEntry
 	}
 	
 	return $outEntry;
+}
+
+#Determines whether the current input entries include additionals (which require a special analysis) or not.
+sub GetOutputEntryAdditionalToo
+{
+	my %targets = %{$_[0]};
+	
+	my $outVar = 0;
+	
+	if (exists $targets{Globals_Constants::INPUT_ENTRY_ADDITIONALS()})
+	{
+		if (scalar(@{$targets{Globals_Constants::INPUT_ENTRY_ADDITIONALS()}}) > 0) { $outVar = 1; }
+	}
+	
+	return $outVar;
 }
 
 1;

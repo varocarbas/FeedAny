@@ -92,9 +92,8 @@ sub UpdateInsideQuotes
 	return @quotes;
 }
 
-#This method is equivalent to the in-built index with the peculiarity that skips
-#all the substrings inside valid quotes (i.e., equal, supported, non-escaped)
-sub IndexOfOutsideQuotes
+#Called internally by IndexOfOutsideQuotes & LastOutsideQuotes to perform their intrinsically identical actions.
+sub OutsideQuotesCommon
 {
 	my $input = $_[0];
 	my $target = $_[1];
@@ -102,22 +101,36 @@ sub IndexOfOutsideQuotes
 	
 	my $inputLen = length($input);
 	my $targetLen = length($target);
-	my $startI =
+	my $startI0 =
 	(
 		scalar(@_) > 2 and $_[2] > -1 and $_[2] <= $inputLen - $targetLen ? $_[2] : 0
 	);
 	if
 	(
 		$inputLen < 1 or $targetLen < 1 or
-		$inputLen < $targetLen or index($input, $target, $startI) < 0
+		$inputLen < $targetLen or index($input, $target, $startI0) < 0
 	)
 	{ return -1; }
 	
+	my $backwards = (scalar(@_) > 3 and $_[3] ? 1 : 0);
 	my @quotes = (undef, undef);
 	my $first = substr($target, 0, 1);
 
-	for (my $i = $startI; $i <= $inputLen - $targetLen; $i++)
+	my $step = 1;
+	my $startI = $startI0;
+	my $endI = $inputLen - $targetLen;
+	if ($backwards)
 	{
+		$startI = $inputLen - 1;
+		$endI = $startI0 + $targetLen - 1;
+		$step = -1;
+	}
+	
+	my $i = $startI - $step;
+	while ($i ne $endI)
+	{
+		$i = $i + $step;
+		
 		my $bit = substr($input, $i, 1);
 		if ($bit eq $first)
 		{
@@ -132,10 +145,23 @@ sub IndexOfOutsideQuotes
 			{
 				@quotes = UpdateInsideQuotes(\@quotes, $tempVar);
 			}
-		}
+		}		
 	}
 	
-	return -1;
+	return -1;	
+}
+
+#This method is equivalent to the in-built index with the peculiarity that skips
+#all the substrings inside valid quotes (i.e., equal, supported, non-escaped)
+sub IndexOfOutsideQuotes
+{
+	return OutsideQuotesCommon($_[0], $_[1], (scalar(@_) > 2 ? $_[2] : -1));
+}
+
+#Similar to the aforementioned IndexOfOutsideQuotes but starting from the end of the string.
+sub LastOutsideQuotes
+{
+	return OutsideQuotesCommon($_[0], $_[1], (scalar(@_) > 2 ? $_[2] : -1));
 }
 
 #Returns the starting/ending indices of the surrounding quotes of the given target or
@@ -202,7 +228,7 @@ sub IterateThroughStringWhile
 	if
 	(
 		!defined($string) or $length < 1 or undef($target) or
-		$i < 0 or $i > $maxI or abs($direction) != 1
+		$i < 0 or $i > $maxI or abs($direction) ne 1
 	)
 	{ return -1; }
 	
@@ -212,8 +238,8 @@ sub IterateThroughStringWhile
 		
 		if
 		(
-			($direction == -1 and $i == 0) or
-			($direction == 1 and $i == $maxI)
+			($direction eq -1 and $i eq 0) or
+			($direction eq 1 and $i eq $maxI)
 		)
 		{ return $i; }
 	}

@@ -43,11 +43,11 @@ sub FileLinesToArray
 	}
 	
 	return @lines;
- }
+}
 
- #Writes the input string to the target file. Only expected to be used with relatively small strings.
- sub TextToFile
- {
+#Writes the input string to the target file. Only expected to be used with relatively small strings.
+sub TextToFile
+{
 	my $text = $_[0];
 	my $filePath = $_[1];		
 
@@ -67,6 +67,6 @@ sub FileLinesToArray
 	}
 	
 	return $isOK;
- }
+}
  
- 1;
+1;

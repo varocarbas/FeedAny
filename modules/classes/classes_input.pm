@@ -12,11 +12,9 @@ sub Instantiate
 	#Hash listing all the url types (constants with the heading "INPUT_URL_") => values (string).
 	%{$instance->{"URLs"}} = (defined($params{"URLs"}) ? %{$params{"URLs"}} : ());
 	
-	#Hash with all the input entry types (keys of %Globals_Variables::InputEntryVars) => Input_Entry instance.
+	#Hash with all the input entry types (keys of %Globals_Variables::InputEntryVars) => associated Input_Entry instance(s).
+	#Globals_Constants::EntriesAdditional is associated with an array and all the other types with a single instance.
 	%{$instance->{"Entries"}} = (defined($params{"Entries"}) ? %{$params{"Entries"}} : ());	
-	
-	#Array listing all the additional input entries (if any). Their outputs will be stored together with the body ones (i.e., Globals_Constants::INPUT_ENTRY_BODY()).
-	@{$instance->{"EntriesAdditional"}} = (defined($params{"EntriesAdditional"}) ? @{$params{"EntriesAdditional"}} : ());
 	
 	#Hash listing all the limit types (constants with the heading "INPUT_MAX_") => values (numeric).
 	%{$instance->{"Limits"}} = (defined($params{"Limits"}) ? %{$params{"Limits"}}: ());	

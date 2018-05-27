@@ -1,11 +1,23 @@
 package Inputs_Checks;
 
-#First validity check for the limit inputs. 
+#Validity check for the limit inputs. 
 sub CheckInputLimit
 {
+	my $input = $_[0];
+	
+	my $limit = undef;	
 	use Scalar::Util qw(looks_like_number);
 	
-	return (looks_like_number($_[0]) ? $_[0] : undef);
+	if (looks_like_number($_[0]))
+	{
+		$limit = $input;
+		if ($limit < 1 or $limit > $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_INPUT_MAX_ENTRIES()})
+		{
+			$limit = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_INPUT_MAX_ENTRIES()};
+		}
+	}
+
+	return $limit;
 }
 
 #In charge of pre-analysing the input entries.
@@ -65,10 +77,14 @@ sub InputsAreOKBasic
 
 		foreach $basic (@Globals_Variables::InputBasic)
 		{
-			if (!exists $inputs{$basic} or length(Accessory::Trim($inputs{$basic}->{"Value"})) < 1)
+			my $found = 0;
+			
+			if (exists $inputs{$basic})
 			{
-				Errors::ShowError(Globals_Constants::ERROR_INPUT_BASIC());
+				if (length(Accessory::Trim($inputs{$basic}->{"Value"})) > 0) { $found = 1; }
 			}
+			
+			if ($found eq 0) { Errors::ShowError(Globals_Constants::ERROR_INPUT_BASIC()); }
 		}
 	}
 	

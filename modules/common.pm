@@ -11,10 +11,12 @@ use globals_constants;
 use lib "$FindBin::RealBin/modules/classes/";
 use classes_input;
 use classes_input_entry;
+use classes_input_constraint;
 use classes_output;
 use classes_output_entry;
 use classes_html;
 use classes_html_entity;
+use classes_html_target;
 
 use lib "$FindBin::RealBin/modules/inputs/";
 use inputs_analysis;

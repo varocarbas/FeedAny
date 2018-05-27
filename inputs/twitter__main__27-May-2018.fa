@@ -1,0 +1,9 @@
+Main URL: https://twitter.com/Twitter //URL of the page to be analysed. It has to start with "http://" or "https://".
+
+//All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
+//Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
+Entry title: <strong class="fullname show-popup-with-id u-textTruncate">
+Entry body: <p class="TweetTextSize TweetTextSize--normal js-tweet-text tweet-text" lang="en" data-aria-label-part="0">
+Entry URL: <a class="tweet-timestamp js-permalink js-nav js-tooltip">
+
+Maximum number of entries: 10 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  
