@@ -7,7 +7,7 @@ sub GetHTML
 
 	my $contents = qx{wget --user-agent=\"FeedAny HTML grabber\" --quiet --output-document=- $url};
 
-    if (length(Accessory::Trim($contents)) < 1)
+	if (length(Accessory::Trim($contents)) < 1)
 	{
 		Errors::ShowError(Globals_Constants::ERROR_HTML_GRABBING(), $url);
 	}
