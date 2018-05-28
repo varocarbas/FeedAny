@@ -32,29 +32,20 @@ sub GetUnescapedQuoteInternal
 	my $maxI = $_[2];
 	my $quote = $_[3];
 	
-	if ($i > 0)
-	{
-		my $bit2 = substr($input, $i - 1, 1);
-				
-		if (($bit2 eq $quote) or ($bit2 eq "\\")) { return undef; }
-	}
-	
-	if ($i < $maxI)
-	{
-		if (substr($input, $i + 1, 1) eq $quote) { return undef; }
-	}
-			
-	return $quote;
+	return
+	(
+		($i < 0) or ($i > $maxI) or ($i > 0 and substr($input, $i - 1, 1) eq "\\") ? undef : $quote
+	);
 }
 
 #Confirms whether the input character includes a supported and non-escaped quotes.
-#Escaped quotes are those preceded by "\" or themselves.
+#Escaped quotes are those preceded by "\".
 sub GetUnescapedQuote
 {
 	my $input = $_[0];
 	my $i = $_[1];
 	if ($i < 0 or !defined($input)) { return undef; }
-	
+		
 	my $maxI = length($input) - 1;
 	if ($i > $maxI) { return undef; }
 	
@@ -84,12 +75,18 @@ sub UpdateInsideQuotes
 	#quoteNew one of the supported quotes.
 	my @quotes = @{$_[0]};
 	my $quoteNew = $_[1];
+	my $quoteI = $_[2];
 	
-	my $i = ($quoteNew eq $Globals_Variables::Quotes[0] ? 0 : 1);	
-	if (defined($quotes[$i])) { $quotes[$i] = undef; }
-	else  { $quotes[$i] = $quoteNew; }
+	if (defined($quotes[$quoteI])) { $quotes[$quoteI] = undef; }
+	else { $quotes[$quoteI] = $quoteNew; }
 
 	return @quotes;
+}
+
+#Called internally by OutsideQuotesCommon to determine the type of the given quote.
+sub GetQuoteID
+{	
+	return ($_[0] eq $Globals_Variables::Quotes[0] ? 0 : 1);
 }
 
 #Called internally by IndexOfOutsideQuotes & LastOutsideQuotes to perform their intrinsically identical actions.
@@ -101,36 +98,31 @@ sub OutsideQuotesCommon
 	
 	my $inputLen = length($input);
 	my $targetLen = length($target);
-	my $startI0 =
-	(
-		scalar(@_) > 2 and $_[2] > -1 and $_[2] <= $inputLen - $targetLen ? $_[2] : 0
-	);
+	my $startI0 = ($_[2] > -1 and $_[2] <= $inputLen - $targetLen ? $_[2] : 0);
 	if
 	(
 		$inputLen < 1 or $targetLen < 1 or
 		$inputLen < $targetLen or index($input, $target, $startI0) < 0
 	)
 	{ return -1; }
+
+	#When analysing random HTML codes, it is possible to find unescaped quotes (i.e., " or ') inside chunks of plain text. For example, <div>problematic text's bit</div>.
+	#These situations might provoke the current method to come to completely wrong conclusions because of misunderstanding said quotes as starting/end stretches which should
+	#be ignored. This is what explains the flag below these lines: when true, all the quotes not matching the HTML-parsing expectations will be assumed to be escaped ones and,
+	#as such, ignored while determining the start/end points of what is considered by this method as "inside quotes".	
+	my $isHTML = $_[3];
 	
-	my $backwards = (scalar(@_) > 3 and $_[3] ? 1 : 0);
 	my @quotes = (undef, undef);
 	my $first = substr($target, 0, 1);
 
 	my $step = 1;
 	my $startI = $startI0;
 	my $endI = $inputLen - $targetLen;
-	if ($backwards)
-	{
-		$startI = $inputLen - 1;
-		$endI = $startI0 + $targetLen - 1;
-		$step = -1;
-	}
 	
 	my $i = $startI - $step;
 	while ($i ne $endI)
 	{
 		$i = $i + $step;
-		
 		my $bit = substr($input, $i, 1);
 		if ($bit eq $first)
 		{
@@ -143,7 +135,19 @@ sub OutsideQuotesCommon
 			my $tempVar = GetUnescapedQuote($input, $i);
 			if (defined($tempVar))
 			{
-				@quotes = UpdateInsideQuotes(\@quotes, $tempVar);
+				my $quoteI = GetQuoteID($tempVar);
+				
+				if
+				(
+					!$isHTML or
+					(
+						$isHTML and QuoteIsHTMLCompatible
+						(
+							$input, $i, $quotes[$quoteI], $tempVar
+						)
+					)
+				)
+				{ @quotes = UpdateInsideQuotes(\@quotes, $tempVar, $quoteI); }	
 			}
 		}		
 	}
@@ -151,17 +155,41 @@ sub OutsideQuotesCommon
 	return -1;	
 }
 
+#Determines whether the given quote matches the default expectations while analysing HTML code, where
+#essentially-escaped quotes might be unescaped.
+sub QuoteIsHTMLCompatible
+{
+	my $input = $_[0];
+	my $i = $_[1];	
+	my $quoteOpen = $_[2];
+	my $quoteNew = $_[3];
+
+	my $isCompatible = 0;
+
+	if (!defined($quoteOpen))
+	{
+		#quoteNew is assumed to be the opening quote.
+		if ($i eq 0) { $isCompatible = 1; }
+		else
+		{
+			my $i2 = IterateThroughStringWhile($input, $i, " ", $i - 1, -1);
+			if ($i2 > -1 and substr($input, $i2, 1) eq "=") { $isCompatible = 1; }			
+		}
+	}
+	else
+	{
+		#quoteNew is assumed to be the closing quote.
+		$isCompatible = 1;
+	}
+	
+	return $isCompatible;
+}
+
 #This method is equivalent to the in-built index with the peculiarity that skips
 #all the substrings inside valid quotes (i.e., equal, supported, non-escaped)
 sub IndexOfOutsideQuotes
 {
-	return OutsideQuotesCommon($_[0], $_[1], (scalar(@_) > 2 ? $_[2] : -1));
-}
-
-#Similar to the aforementioned IndexOfOutsideQuotes but starting from the end of the string.
-sub LastOutsideQuotes
-{
-	return OutsideQuotesCommon($_[0], $_[1], (scalar(@_) > 2 ? $_[2] : -1));
+	return OutsideQuotesCommon($_[0], $_[1], (scalar(@_) > 2 ? $_[2] : -1), $_[3]);
 }
 
 #Returns the starting/ending indices of the surrounding quotes of the given target or

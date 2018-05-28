@@ -150,7 +150,7 @@ sub GetNextEntityCloseI2s
 	while ($count < $maxCount)
 	{
 		$count++;
-		$i = Accessory::IndexOfOutsideQuotes($html, "/", $i);
+		$i = Accessory::IndexOfOutsideQuotes($html, "/", $i, 1);
 		if ($i < 0 or $i >= $length - 2)
 		{
 			@outArray = ($i);
@@ -290,7 +290,7 @@ sub FindEntityMainDefinitionInternal
 		$maxCount0 = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_GLOBAL()};
 		$maxCount = $Globals_Variables::GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()};		
 	}
-
+	
 	while ($count < $maxCount and $count0 < $maxCount0)
 	{
 		$count++;
@@ -304,7 +304,7 @@ sub FindEntityMainDefinitionInternal
 
 		my $lastI = $i + $lengthTag;
 		my $closeI = -1;
-
+		
 		my $count2 = 0;
 		while ($count2 < $maxCount)
 		{
@@ -314,9 +314,8 @@ sub FindEntityMainDefinitionInternal
 
 			$lastI = $closeI;
 			
-			#The loop below these lines (2 iterations max.) accounts for the scenario of a
-			#valid HTML entity whose contents are surrounded by others. Analysing them is
-			#required to find the closing tag. For example, finding "<div><div>text</div></div>",
+			#The loop below these lines accounts for the scenario of a valid HTML entity whose contents are surrounded
+			#by others. Analysing them is required to find the closing tag. For example, finding "<div><div>text</div></div>",
 			#where the contents of the first div entity are expected to be "<div>text</div>".
 
 			my $count3 = 0;
@@ -625,7 +624,7 @@ sub MatchEntityAttribute
 	
 	$entity->{"Found"} = 0;
 	$entity = GetNextAttribute($entity, $id, $value);
-
+	
 	if (!$entity->{"Found"})
 	{
 		#Not finding one of the attribute values provokes the analysis to

@@ -53,14 +53,7 @@ sub GetOutputEntries
 		if (!defined($entry) or $entry->{"LastI"} < 0 or $entry->{"LastI"} > $endI) { last; }
 		
 		$htmlClass->{"LastI"} = $entry->{"LastI"};
-				
-		my %contents = %{$entry->{"Content"}};
-		my $body = undef;
-		if (exists $contents{Globals_Constants::INPUT_ENTRY_BODY()})
-		{
-			$body = $contents{Globals_Constants::INPUT_ENTRY_BODY()};
-		}
-		if (!defined($body) or length($body) < 1) { next; }
+		if (!OutputEntryIsOK(\%{$entry->{"Content"}})) { next; }
 
 		push @outEntries, $entry;
 		
@@ -215,7 +208,7 @@ sub GetOutputEntryContentAnalyseConstraints
 		{
 			if
 			(
-				$operator eq Globals_Constants::OPERATORS_LOGICAL_AND() or
+				($i eq $maxI) or ($operator eq Globals_Constants::OPERATORS_LOGICAL_AND()) or
 				(
 					$operator eq -1 and $i < $maxI and $constraints[$i]->{"Operator"} eq Globals_Constants::OPERATORS_LOGICAL_AND()
 				)
@@ -306,25 +299,47 @@ sub GetOutputEntry
 
 	my $outEntry = GetOutputEntryContent($htmlClass, 0);
 
-	if (defined($outEntry) and GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
+	my %content = %{$outEntry->{"Content"}};
+	
+	if (OutputEntryIsOK(\%content) and GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
 	{
 		my $tempVar = GetOutputEntryContent($htmlClass, 1);
 		
 		my %additionals = %{$tempVar->{"Content"}};
-		my %content = %{$outEntry->{"Content"}};
-		
-		foreach my $key (keys %additionals)
+		if (OutputEntryIsOK(\%additionals))
 		{
-			$content
+			foreach my $key (keys %additionals)
 			{
-				Globals_Constants::INPUT_ENTRY_BODY()
-			}
-			.= "<br/><br/>[ADDITIONAL]<br/>" . $additionals{$key};
+				$content
+				{
+					Globals_Constants::INPUT_ENTRY_BODY()
+				}
+				.= "<br/><br/>[ADDITIONAL]<br/>" . $additionals{$key};
+			}		
 		}
-		%{$outEntry->{"Content"}} = %content;
+		else
+		{
+			#One of the additional fields constraints hasn't been met and the whole entry is invalid.
+			$content{Globals_Constants::INPUT_ENTRY_BODY()} = "";		
+		}
 	}
 	
+	%{$outEntry->{"Content"}} = %content;
+				
 	return $outEntry;
+}
+
+#Determines whether the given output entry is valid (= its body is OK).
+sub OutputEntryIsOK
+{
+	my %content = %{$_[0]};
+	
+	return 
+	(
+		!exists $content{Globals_Constants::INPUT_ENTRY_BODY()} or
+		!defined($content{Globals_Constants::INPUT_ENTRY_BODY()}) or
+		length(Accessory::Trim($content{Globals_Constants::INPUT_ENTRY_BODY()})) < 1 ? 0 : 1
+	);
 }
 
 #Determines whether the current input entries include additionals (which require a special analysis) or not.
