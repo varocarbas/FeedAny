@@ -182,9 +182,9 @@ sub GetOutputEntryContent
 		if (scalar(@constraints) > 0 and (!$matched or !defined($outContent{$input}) or length(Accessory::Trim($outContent{$input})) < 1))
 		{
 			#Not matching one of the targets (e.g., title) doesn't necessarily invalidate the given entry,
-			#unless it includes a constraint (e.g., only titles including whatever).			
+			#unless it includes a constraint (e.g., only titles including whatever).
+			#The analysis will better continue anyway to improve the LastI value as much as possible (lower risk of previous information included in latter entries).
 			$outContent{Globals_Constants::INPUT_ENTRY_BODY()} = "";
-			last;
 		}
 	}
 	
@@ -298,30 +298,37 @@ sub GetOutputEntry
 	my $htmlClass = $_[0];
 
 	my $outEntry = GetOutputEntryContent($htmlClass, 0);
-
 	my %content = %{$outEntry->{"Content"}};
 	
-	if (OutputEntryIsOK(\%content) and GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
+	if (GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
 	{
-		my $tempVar = GetOutputEntryContent($htmlClass, 1);
+		#Better analysing additionals even when the main analysis was wrong to make sure that the LastI
+		#value is as good as possible (i.e., no old information included in future entries).
 		
+		my $tempVar = GetOutputEntryContent($htmlClass, 1);
 		my %additionals = %{$tempVar->{"Content"}};
-		if (OutputEntryIsOK(\%additionals))
+		
+		if (OutputEntryIsOK(\%content))
 		{
-			foreach my $key (keys %additionals)
+			if (OutputEntryIsOK(\%additionals))
 			{
-				$content
+				foreach my $key (keys %additionals)
 				{
-					Globals_Constants::INPUT_ENTRY_BODY()
-				}
-				.= "<br/><br/>[ADDITIONAL]<br/>" . $additionals{$key};
+					$content
+					{
+						Globals_Constants::INPUT_ENTRY_BODY()
+					}
+					.= "<br/><br/>[ADDITIONAL]<br/>" . $additionals{$key};
+				}		
+			}
+			else
+			{
+				#One of the additional fields constraints hasn't been met and the whole entry is invalid.
+				$content{Globals_Constants::INPUT_ENTRY_BODY()} = "";		
 			}		
 		}
-		else
-		{
-			#One of the additional fields constraints hasn't been met and the whole entry is invalid.
-			$content{Globals_Constants::INPUT_ENTRY_BODY()} = "";		
-		}
+		
+		$outEntry->{"LastI"} = $tempVar->{"LastI"};
 	}
 	
 	%{$outEntry->{"Content"}} = %content;

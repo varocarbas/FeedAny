@@ -2,8 +2,8 @@ Main URL: https://www.researchgate.net/jobs //URL of the page to be analysed. It
 
 //All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
 //Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
-Entry title: <a class="nova-e-link nova-e-link--color-inherit nova-e-link--theme-bare"> not equal "job abc"
-Entry body: <li class="nova-e-list__item nova-v-job-item__info-section-list-item">
+Entry title: <a class="nova-e-link nova-e-link--color-inherit nova-e-link--theme-bare">
+Entry body: <div class="nova-e-text nova-e-text--size-m nova-e-text--family-sans-serif nova-e-text--spacing-none nova-e-text--color-inherit nova-v-job-item__title nova-v-job-item__title--clamp-3">
 Entry URL: <a class="nova-e-link nova-e-link--color-inherit nova-e-link--theme-bare"> 
 
 Maximum number of entries: 30 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  
