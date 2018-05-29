@@ -443,7 +443,7 @@ sub GetEntityContentLinkFinalImprovements
 #This method performs some basic corrections to minimise the chances of problems on this front.
 sub GetEntityContentLink
 {
-	my $html = lc($_[0]);
+	my $html = $_[0];
 	my $length = length($html);
 	
 	my $outLink = GetEntityContentLinkFromURL($html, $length);
