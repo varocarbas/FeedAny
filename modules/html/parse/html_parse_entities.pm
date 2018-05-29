@@ -394,7 +394,7 @@ sub GetEntityContentLinkFinalImprovements
 		$domain0 = $Globals_Variables::CurDomain;
 	}
 
-	my $protocol = "";		
+	my $outlink2 = lc($outlink);		
 	my $tempVar = substr($outlink, 0, 2);
 	if ($tempVar eq "//" or $tempVar eq "./")
 	{
@@ -406,8 +406,13 @@ sub GetEntityContentLinkFinalImprovements
 	}
 	else
 	{
-		if (index($outlink, 0, 8) eq "https://") { $protocol = "https://"; }
-		elsif (index($outlink, 0, 7) eq "http://") { $protocol = "http://"; }		
+		my $length = length($outlink);
+		if
+		(
+			($length > 8 and substr($outlink2, 0, 8) eq "https://") or
+			($length > 7 and substr($outlink2, 0, 7) eq "http://")
+		)
+		{ return $outlink; }	
 	}
 
 	my $includeDomain = 1;
@@ -415,8 +420,9 @@ sub GetEntityContentLinkFinalImprovements
 
 	foreach my $domain (@domains)
 	{
-		if (index($outlink, $domain) eq 0 + length($protocol))
+		if (index($outlink2, $domain0) eq 0)
 		{
+
 			$includeDomain = 0;
 			last;
 		}
@@ -430,9 +436,7 @@ sub GetEntityContentLinkFinalImprovements
 		$outlink = $domain0 . $outlink;
 	}
 	
-	if ($protocol ne "") { $outlink = $protocol0 . $outlink; }
-	
-	return $outlink;
+	return $protocol0 . $outlink;
 }
 
 #In some cases, the URLs aren't fully compatible with the expected format.
