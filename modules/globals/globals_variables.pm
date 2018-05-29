@@ -209,6 +209,9 @@ sub InitialiseHTML()
 	$HTMLTags{Globals_Constants::HTML_ENTITY_LINK()} = "link";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_META()} = "meta";
 	$HTMLTags{Globals_Constants::HTML_ENTITY_TITLE()} = "title";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_DL()} = "dl";
+	$HTMLTags{Globals_Constants::HTML_ENTITY_DT()} = "dt";	
+	$HTMLTags{Globals_Constants::HTML_ENTITY_SELECT()} = "select";	
 }
 
 #Populates all the limit related variables.

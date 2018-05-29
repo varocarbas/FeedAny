@@ -383,40 +383,55 @@ sub GetEntityContentLinkFromURL
 sub GetEntityContentLinkFinalImprovements
 {
 	my $link = $_[0];
+	if (!defined($link) or length($link) < 2) { return $link; }
 	
 	my $outlink = $link;
-	my $protocol;
-	my $domain;	
+	my $protocol0;
+	my $domain0;	
 	{
 		no warnings "once";
-		$protocol = $Globals_Variables::CurProtocol;
-		$domain = $Globals_Variables::CurDomain;
+		$protocol0 = $Globals_Variables::CurProtocol;
+		$domain0 = $Globals_Variables::CurDomain;
 	}
-			
+
+	my $protocol = "";		
 	my $tempVar = substr($outlink, 0, 2);
-	if ($tempVar eq "//" or $tempVar eq "./") { return $protocol . $domain . "/" . substr($outlink, 2); }
-	
+	if ($tempVar eq "//" or $tempVar eq "./")
+	{
+		return $protocol0 . $domain0 . "/" . substr($outlink, 2);
+	}
+	elsif (substr($outlink, 0, 1) eq "/")
+	{
+		return $protocol0 . $domain0 . $outlink;		
+	}
+	else
+	{
+		if (index($outlink, 0, 8) eq "https://") { $protocol = "https://"; }
+		elsif (index($outlink, 0, 7) eq "http://") { $protocol = "http://"; }		
+	}
+
 	my $includeDomain = 1;
 	my @domains = ("www." . $domain, $domain);
 
 	foreach my $domain (@domains)
 	{
-		if (index($outlink, $domain) eq 0)
+		if (index($outlink, $domain) eq 0 + length($protocol))
 		{
 			$includeDomain = 0;
 			last;
 		}
 	}
-	
+
 	if ($includeDomain)
 	{
 		#It is a relative path to which the main domain name has to be added.
 		if (substr($outlink, 0, 1) ne "/") { $outlink = "/" . $outlink; }
 		
-		$outlink = $domain . $outlink;
+		$outlink = $domain0 . $outlink;
 	}
-	$outlink = $protocol . $outlink;
-
+	
+	if ($protocol ne "") { $outlink = $protocol0 . $outlink; }
+	
 	return $outlink;
 }
 
@@ -424,7 +439,7 @@ sub GetEntityContentLinkFinalImprovements
 #This method performs some basic corrections to minimise the chances of problems on this front.
 sub GetEntityContentLink
 {
-	my $html = $_[0];
+	my $html = lc($_[0]);
 	my $length = length($html);
 	
 	my $outLink = GetEntityContentLinkFromURL($html, $length);
@@ -446,7 +461,7 @@ sub GetEntityContentLink
 	
 	my $quote = Accessory::GetUnescapedQuote($html, $i);
 	if (!defined($quote)) { return $outLink; }
-	
+
 	my $i2 = index($html, $quote, $i + 1);
 	
 	return

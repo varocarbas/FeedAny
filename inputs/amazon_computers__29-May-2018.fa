@@ -1,0 +1,13 @@
+Main URL: https://www.amazon.com/s/ref=lp_565098_nr_p_72_0?fst=as%3Aoff&rh=n%3A172282%2Cn%3A!493964%2Cn%3A541966%2Cn%3A13896617011%2Cn%3A565098%2Cp_72%3A1248879011&bbn=565098&ie=UTF8&qid=1527584206&rnid=1248877011 //URL of the page to be analysed. It has to start with "http://" or "https://".
+
+//All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
+//Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
+Entry title: <h2 class="a-size-medium s-inline  s-access-title  a-text-normal">
+Entry body: <h2 class="a-size-medium s-inline  s-access-title  a-text-normal">
+Entry URL: <div aria-hidden="true" class="a-column a-span12 a-text-center">
+Entry additional: <span class="sx-price sx-price-large">
+Entry additional: <a href="javascript:void(0)" class="a-popover-trigger a-declarative">
+Entry additional: <dl class="a-definition-list a-vertical s-padding-left-base">
+
+
+Maximum number of entries: 20 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  

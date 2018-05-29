@@ -5,7 +5,7 @@ sub GetHTML
 {
 	my $url = $_[0];
 
-	my $contents = qx{wget --user-agent=\"FeedAny HTML grabber\" --quiet --output-document=- $url};
+	my $contents = qx{wget --user-agent=\"FeedAny HTML grabber\" --quiet --output-document=- "$url"};
 
 	if (length(Accessory::Trim($contents)) < 1)
 	{

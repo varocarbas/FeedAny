@@ -100,4 +100,151 @@ sub GetNextHTMLEntityMainContents
 	return @outArray;	
 }
 
+#Determines whether the input HTML code contains a valid (at least, in appearance) version of the target entity and arguments
+sub EntityAndArgsExist
+{
+	my $html = lc($_[0]);
+	my $length = $_[1];
+	my $entity = $_[2]; 
+	my @args = @{$_[3]};
+
+	my $i = 0;
+	
+	while ($i > -1)
+	{
+		$i = Accessory::IndexOfOutsideQuotes($html, $entity, $i + 1);
+		if ($i < 2) { next; }
+
+		my $i2 = Accessory::IterateThroughStringWhile($html, $length, " ", $i - 1, -1);
+		if ($i2 < 0 or substr($html, $i2, 1) ne "<") { next; }
+
+		$i2 = Accessory::IndexOfOutsideQuotes($html, ">", $i);
+		if ($i2 <= $i) { next; }
+
+		#An apparently valid main entity has been found. Now the arguments have to be analysed.
+		my $argsOK = 1;
+		
+		foreach my $arg (@args)
+		{
+			my $i3 = Accessory::IndexOfOutsideQuotes($html, $arg);
+			if ($i3 <= $i or $i3 >= $i2)
+			{
+				$argsOK = 0;
+				last;
+			}
+			
+			$i3 = Accessory::IterateThroughStringWhile($html, $length, " ", $i3 + 1, 1);
+			if ($i3 < 0 or substr($html, $i3) ne "=")
+			{
+				$argsOK = 0;
+				last;
+			}			
+		
+			$i3 = Accessory::IterateThroughStringWhile($html, $length, " ", $i3 + 1, 1);
+			if ($i3 < 0 or !defined(Accessory::GetUnescapedQuote($html, $i3)))
+			{
+				$argsOK = 0;
+				last;
+			}			
+		}
+		
+		if ($argsOK) { return 1; }
+	}
+
+	return 0; 
+}
+
+#Returns an updated version of the input HTML code where all the occurrences of the target HTML entity have been removed. 
+sub RemoveImgOccurrences
+{
+	my $html = $_[0];
+	my $length = $_[1];
+
+	my @startEnd = ("img", ">", ""); #The third element is just meant to indicate the type of scenario.
+	
+	return RemoveHTMLBits($html, $length, \@startEnd);
+}
+
+#Performs some preliminary corrections (e.g., removing comments) on the raw HTML code, in order to facilitate
+#the subsequent parsing actions.
+sub PreprocessHTML
+{
+	my $html = $_[0];
+	my $length = $_[1];
+	
+	my $htmlOut = PreprocessHTMLRemoveComments($html, $length);
+	
+	return $htmlOut;
+}
+
+#Called by PreprocessHTML to remove comments.
+sub PreprocessHTMLRemoveComments
+{
+	my $html = $_[0];
+	my $length = $_[1];
+	
+	my @startEnd = ("<!--", "-->");
+	
+	return RemoveHTMLBits($html, $length, \@startEnd);	
+}
+
+#Removes all the chunks in the input HTML code defined by the given start/end substrings.
+sub RemoveHTMLBits
+{
+	my $html = $_[0];
+	my $length = $_[1];
+	my @startEnd = @{$_[2]};
+	
+	my $type = (scalar(@startEnd) eq 3 ? 1 : 0);
+	
+	my $html2 = lc($html);
+	my $lengthEnd = length($startEnd[1]);
+	my $htmlOut = "";
+	my $i = 0;
+	
+	while(1)
+	{
+		my $tempI = Accessory::IndexOfOutsideQuotes($html2, $startEnd[0], $i);
+		if (!RemoveHTMLBitsStartFound($html2, $length, $tempI, $type))
+		{
+			$htmlOut .= substr($html, $i);
+			last;
+		}
+		else
+		{
+			$htmlOut .= substr($html, $i, $tempI - $i);
+			$tempI = Accessory::IndexOfOutsideQuotes($html2, $startEnd[1], $tempI);
+			if ($tempI < 0) { last; }
+			$i = $tempI + $lengthEnd + 1;
+		}
+	}
+	
+	return $htmlOut;	
+}
+
+#Determines whether the given index represents a valid starting point, as expected by RemoveHTMLBits.
+sub RemoveHTMLBitsStartFound
+{
+	my $html2 = $_[0];
+	my $length = $_[1];
+	my $tempI = $_[2];
+	my $type = $_[3];
+	
+	my $found = 0;
+	
+	if ($tempI < 0) {}
+	elsif ($type eq 0) { $found = 1; }
+	elsif ($type eq 1)
+	{
+		#It is a specific case of a HTML entity where only the opening "<" matters.
+		if ($tempI > 1)
+		{
+			$tempI = Accessory::IterateThroughStringWhile($html2, $length, " ", $tempI - 1, -1);
+			if ($tempI > -1 and substr($html2, $tempI, 1) eq "<") { $found = 1; }	
+		}
+	}
+	
+	return $found;
+}
+
 1;

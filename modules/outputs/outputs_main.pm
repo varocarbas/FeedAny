@@ -35,7 +35,7 @@ sub GetOutputEntries
 	my %inputs = %{$_[1]};
 	my %limits = %{$_[2]};
 
-	my $htmlClass = Html->Instantiate("HTML" => $html);
+	my $htmlClass = Html->Instantiate("HTML" => HTML_Parse_Common::PreprocessHTML($html, length($html)));
 	
 	$htmlClass = GetOutputEntriesTargets(\%inputs, $htmlClass);
 	if (scalar(keys %{$htmlClass->{"Targets"}}) eq 0) { return (); }
@@ -53,7 +53,8 @@ sub GetOutputEntries
 		if (!defined($entry) or $entry->{"LastI"} < 0 or $entry->{"LastI"} > $endI) { last; }
 		
 		$htmlClass->{"LastI"} = $entry->{"LastI"};
-		if (!OutputEntryIsOK(\%{$entry->{"Content"}})) { next; }
+		my %content = %{$entry->{"Content"}};
+		if (!OutputEntryIsOK(\%content) or OutputEntryRepeated(\@outEntries, \%content)) { next; }
 
 		push @outEntries, $entry;
 		
@@ -63,6 +64,39 @@ sub GetOutputEntries
 	}
 	
 	return @outEntries;
+}
+
+#Checks whether the given output entry is identical to a previous one.
+sub OutputEntryRepeated
+{
+	my @allEntries = @{$_[0]};
+	if (scalar(@allEntries) < 1) { return 0; }
+	
+	my %curContent = %{$_[1]};
+	
+	foreach my $entry (@allEntries)
+	{
+		my %content = %{$entry->{"Content"}};
+		
+		{
+			no warnings "once";
+			
+			my $repeated = 1;
+			
+			foreach $item (%Globals_Variables::InputEntryVars)
+			{
+				if ($curContent{$item} ne $content{$item})
+				{
+					$repeated = 0;
+					last;
+				}
+			}
+			
+			if ($repeated) { return 1; }
+		}
+	}
+	
+	return 0;
 }
 
 #From the corresponding input entries, it generates the targets (group of HTML_Entity instances) to be applied to the HTML
@@ -130,7 +164,7 @@ sub GetOutputEntryContent
 	#is relevant outside this method. The variable $addI is precisely meant to take care of this correction.
 	my $addI = 0;
 	
-	foreach my $input (keys %targets0)
+	foreach my $input (sort keys %targets0)
 	{
 		my @targets = @{$targets0{$input}->{"Entities"}};
 		my $maxTargets = scalar(@targets) - 1;
@@ -299,27 +333,30 @@ sub GetOutputEntry
 
 	my $outEntry = GetOutputEntryContent($htmlClass, 0);
 	my %content = %{$outEntry->{"Content"}};
+	my $isOK = OutputEntryIsOK(\%content);
+	my $remoteImg = 0;
 	
 	if (GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
 	{
 		#Better analysing additionals even when the main analysis was wrong to make sure that the LastI
 		#value is as good as possible (i.e., no old information included in future entries).
 		
+		if ($outEntry->{"LastI"} > $htmlClass->{"LastI"}) { $htmlClass->{"LastI"} = $outEntry->{"LastI"}; }
 		my $tempVar = GetOutputEntryContent($htmlClass, 1);
 		my %additionals = %{$tempVar->{"Content"}};
 		
-		if (OutputEntryIsOK(\%content))
+		if ($isOK)
 		{
 			if (OutputEntryIsOK(\%additionals))
 			{
-				foreach my $key (keys %additionals)
+				$remoteImg = 1;
+				my $body = $content{Globals_Constants::INPUT_ENTRY_BODY()};
+				foreach my $key (sort keys %additionals)
 				{
-					$content
-					{
-						Globals_Constants::INPUT_ENTRY_BODY()
-					}
-					.= "<br/><br/>[ADDITIONAL]<br/>" . $additionals{$key};
-				}		
+					$body .= "<br/><br/>[ADDITIONAL " . $key . "]<br/>" . $additionals{$key};
+				}
+				
+				$content{Globals_Constants::INPUT_ENTRY_BODY()} = $body;
 			}
 			else
 			{
@@ -328,12 +365,43 @@ sub GetOutputEntry
 			}		
 		}
 		
-		$outEntry->{"LastI"} = $tempVar->{"LastI"};
+		if ($tempVar->{"LastI"} > $outEntry->{"LastI"}) { $outEntry->{"LastI"} = $tempVar->{"LastI"}; }
+	}
+		
+	if ($isOK and $remoteImg)
+	{
+		#There are various elements in the body (i.e., main and, at least, one additional) and better removing
+		#all the imgs to ensure the visibility of all of them.
+		my $body = $content{Globals_Constants::INPUT_ENTRY_BODY()};
+		my $length = length($body);
+		
+		$content{Globals_Constants::INPUT_ENTRY_BODY()} =
+		(
+			HTML_Parse_Common::EntityAndArgsExist($body, $length, "img", \@{("src")}) ?
+			HTML_Parse_Common::RemoveImgOccurrences($body, $length) : $body
+		);
 	}
 	
 	%{$outEntry->{"Content"}} = %content;
 				
 	return $outEntry;
+}
+
+#Performs all the required actions to make sure that the input string meets the expected format in the entry body.
+sub UpdateBody
+{
+	my $input = $_[0];
+	my $length = $_[1];
+
+	#img entities are relevant because of the peculiar treatment that most of HTML viewers give to it, which might affect the
+	#visibility of some of the elements (e.g., additionals not seen because of displaying the img of the main one).
+	my $output =
+	(
+		HTML_Parse_Common::EntityAndArgsExist($input, $length, "img", \@{("src")}) eq 0 ?
+		$input : HTML_Parse_Common::RemoveImgOccurrences($input, $length)
+	);
+	
+	return $output;
 }
 
 #Determines whether the given output entry is valid (= its body is OK).

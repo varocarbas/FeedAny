@@ -24,16 +24,13 @@ sub MainExecution()
 		print("Analysing " . $input->{"Name"} . "\n");
 		
 		my $output = Outputs_Main::GetOutput($input);
+
 		if (!defined($output))
 		{
 			print("ERROR -- No output will be generated for " . $input->{"Name"} . ".\n");
 			next;
 		}
-		else
-		{
-			print("\n");
-			Outputs_RSS::GenerateOutputRSS($output);
-		}
+		else { Outputs_RSS::GenerateOutputRSS($output); }
 	}	
 }
 

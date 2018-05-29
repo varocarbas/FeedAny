@@ -12,7 +12,7 @@ use constant { RSS_FORMAT_HEADING => 0, RSS_FORMAT_VERSION => 1, RSS_FORMAT_ATOM
 #All the main RSS items whose population requires some kind of special treatment.
 use constant { RSS_ENTRY_TITLE => 0, RSS_ENTRY_LINK => 1, RSS_ENTRY_GUID => 2, RSS_ENTRY_DESCRIPTION => 3, RSS_ENTRY_DATE => 4 };
 
-#Types of fields in the input files, one per line.
+#Types of fields in the input files, one per line. In principle, the parsing process is assumed to go from lower values to bigger ones (e.g., title before body).
 use constant
 {
 	INPUT_URL_MAIN => 0, INPUT_ENTRY_TITLE => 1, INPUT_ENTRY_BODY => 2, INPUT_ENTRY_URL => 3, INPUT_ENTRY_LIMIT => 4, INPUT_ENTRY_ADDITIONALS => 5
@@ -29,7 +29,7 @@ use constant
 	HTML_ENTITY_EM => 13, HTML_ENTITY_STRONG => 14, HTML_ENTITY_TABLE => 15, HTML_ENTITY_TR => 16, HTML_ENTITY_TD => 17, HTML_ENTITY_TH => 18,
 	HTML_ENTITY_THEAD => 19, HTML_ENTITY_TBODY => 20, HTML_ENTITY_TFOOT => 21, HTML_ENTITY_CAPTION => 22, HTML_ENTITY_INPUT => 23,
 	HTML_ENTITY_FORM => 24, HTML_ENTITY_UL => 25, HTML_ENTITY_LI => 26, HTML_ENTITY_SCRIPT => 27, HTML_ENTITY_STYLE => 28, HTML_ENTITY_LINK => 29,
-	HTML_ENTITY_META => 30, HTML_ENTITY_TITLE => 31
+	HTML_ENTITY_META => 30, HTML_ENTITY_TITLE => 31, HTML_ENTITY_DL => 32, HTML_ENTITY_DT => 33, HTML_ENTITY_SELECT => 34
 };
 
 #Constraints eventually accounted while analysing the input strings.
