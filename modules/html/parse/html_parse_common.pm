@@ -160,9 +160,9 @@ sub RemoveImgOccurrences
 	my $html = $_[0];
 	my $length = $_[1];
 
-	my @startEnd = ("img", ">", ""); #The third element is just meant to indicate the type of scenario.
+	my @startEnd = ("img", ">");
 	
-	return RemoveHTMLBits($html, $length, \@startEnd);
+	return RemoveHTMLBits($html, $length, \@startEnd, 1, 1);
 }
 
 #Performs some preliminary corrections (e.g., removing comments) on the raw HTML code, in order to facilitate
@@ -171,7 +171,7 @@ sub PreprocessHTML
 {
 	my $html = $_[0];
 	my $length = $_[1];
-	
+
 	my $htmlOut = PreprocessHTMLRemoveComments($html, $length);
 	
 	return $htmlOut;
@@ -182,10 +182,9 @@ sub PreprocessHTMLRemoveComments
 {
 	my $html = $_[0];
 	my $length = $_[1];
-	
+
 	my @startEnd = ("<!--", "-->");
-	
-	return RemoveHTMLBits($html, $length, \@startEnd);	
+	return RemoveHTMLBits($html, $length, \@startEnd, 0, 0);	
 }
 
 #Removes all the chunks in the input HTML code defined by the given start/end substrings.
@@ -194,8 +193,8 @@ sub RemoveHTMLBits
 	my $html = $_[0];
 	my $length = $_[1];
 	my @startEnd = @{$_[2]};
-	
-	my $type = (scalar(@startEnd) eq 3 ? 1 : 0);
+	my $outsideQuotes = @{$_[3]};
+	my $type = @{$_[4]};
 	
 	my $html2 = lc($html);
 	my $lengthEnd = length($startEnd[1]);
@@ -204,7 +203,7 @@ sub RemoveHTMLBits
 	
 	while(1)
 	{
-		my $tempI = Accessory::IndexOfOutsideQuotes($html2, $startEnd[0], $i);
+		my $tempI = RemoveHTMLBitsGetIndex($html2, $startEnd[0], $i, $outsideQuotes);
 		if (!RemoveHTMLBitsStartFound($html2, $length, $tempI, $type))
 		{
 			$htmlOut .= substr($html, $i);
@@ -213,13 +212,24 @@ sub RemoveHTMLBits
 		else
 		{
 			$htmlOut .= substr($html, $i, $tempI - $i);
-			$tempI = Accessory::IndexOfOutsideQuotes($html2, $startEnd[1], $tempI);
+			$tempI = RemoveHTMLBitsGetIndex($html2, $startEnd[1], $tempI, $outsideQuotes);
 			if ($tempI < 0) { last; }
 			$i = $tempI + $lengthEnd + 1;
 		}
 	}
 	
 	return $htmlOut;	
+}
+
+#Called from RemoveHTMLBits to get the given index by accounting for the given conditions (i.e., quotes being relevant or not).
+sub RemoveHTMLBitsGetIndex
+{
+	my $html = $_[0];
+	my $target = $_[1];
+	my $i = $_[2];
+	my $outsideQuotes = $_[3];
+	
+	return ($outsideQuotes ? Accessory::IndexOfOutsideQuotes($html, $target, $i) : index($html, $target, $i));
 }
 
 #Determines whether the given index represents a valid starting point, as expected by RemoveHTMLBits.
