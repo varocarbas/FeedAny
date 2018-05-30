@@ -173,7 +173,7 @@ sub PreprocessHTML
 	my $length = $_[1];
 
 	my $htmlOut = PreprocessHTMLRemoveComments($html, $length);
-	
+
 	return $htmlOut;
 }
 
@@ -200,10 +200,11 @@ sub RemoveHTMLBits
 	my $lengthEnd = length($startEnd[1]);
 	my $htmlOut = "";
 	my $i = 0;
-	
+
 	while(1)
 	{
 		my $tempI = RemoveHTMLBitsGetIndex($html2, $startEnd[0], $i, $outsideQuotes);
+
 		if (!RemoveHTMLBitsStartFound($html2, $length, $tempI, $type))
 		{
 			$htmlOut .= substr($html, $i);
@@ -212,9 +213,11 @@ sub RemoveHTMLBits
 		else
 		{
 			$htmlOut .= substr($html, $i, $tempI - $i);
+			
 			$tempI = RemoveHTMLBitsGetIndex($html2, $startEnd[1], $tempI, $outsideQuotes);
 			if ($tempI < 0) { last; }
-			$i = $tempI + $lengthEnd + 1;
+			
+			$i = $tempI + $lengthEnd;
 		}
 	}
 	
