@@ -15,7 +15,7 @@ FeedAny generates web feeds from random pages via HTML parsing. The target web p
 
 ## Input files (*.fa)
 
-All the input files are expected to follow these rules:         
+All the input files are expected to follow these rules:
 - The titles (before ":") aren't supposed to be modified.
 - The input values (after ":") have to verify the corresponding format as suggested by the title: URL, HTML or integer numeric.
 - URLs have to be valid and to start with "http://" or "https://".
