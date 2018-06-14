@@ -29,7 +29,7 @@ A Linux user wants to get the last codeproject.com articles via RSS. This is wha
 - Choose a descriptive chunk of simple, non-enhanced text from the first item description, show the page source and look for it.
 - Now (20-03-2018), it is immediately preceded by ```<div id="[GIBBERISH]" class="description">```. [GIBBERISH] is unique, but ```class="description"``` is used by all the items.
 - Open "code_project_last.fa" and write ```<div class="description">``` right after "Entry body:".
-- The same process can also be repeated for "Entry title:" and "Entry URL:",  always by choosing descriptive HTML entities and attributes. It is possible to pick just some of the attributes or an entity not immediately preceding the given text.  
+- The same process can also be repeated for "Entry title:" and "Entry URL:",  always by choosing descriptive HTML entities and attributes. It is possible to pick just some of the attributes or an entity not immediately preceding the given text.
 - Run FeedAny by typing "perl FeedAny.pl" in the console and see "code_project_last.xml" being created in the "outputs" folder.
 - That output file might be copied to the given local server and opened with a RSS reader through HTTP.
 - A cronjob might also be set up to regularly update the "code_project_last.xml" contents.
