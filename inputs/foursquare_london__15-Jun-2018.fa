@@ -1,0 +1,11 @@
+Main URL: https://foursquare.com/explore?mode=url&near=London%2C%20Greater%20London%2C%20United%20Kingdom&nearGeoId=72057594040571679 //URL of the page to be analysed. It has to start with "http://" or "https://".
+
+//All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
+//Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
+Entry title: <div class="venueDetails">
+Entry body: <div class="venueDetails">
+Entry URL: <div class="venueDetails">
+Entry additional: <p class="tipText">
+
+
+Maximum number of entries: 30 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  

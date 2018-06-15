@@ -1,0 +1,9 @@
+Main URL: https://eur-lex.europa.eu/search.html?locale=en&qid=1488202961906&FM_CODED=PAPER_WHITE&CASE_LAW_SUMMARY=false&DTS_DOM=ALL&typeOfActStatus=OTHER&type=advanced&lang=en&SUBDOM_INIT=ALL_ALL&DTS_SUBDOM=ALL_ALL //URL of the page to be analysed. It has to start with "http://" or "https://".
+
+//All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
+//Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
+Entry title: <td class="publicationTitle">
+Entry body: <td class="leftMetadata">
+Entry URL: <td class="publicationTitle">
+
+Maximum number of entries: 50 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  

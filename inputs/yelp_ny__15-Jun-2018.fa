@@ -1,9 +1,11 @@
-Main URL: https://facebook.com/facebook //URL of the page to be analysed. It has to start with "http://" or "https://".
+Main URL: https://www.yelp.com/search?find_loc=New+York,+NY //URL of the page to be analysed. It has to start with "http://" or "https://".
 
 //All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
 //Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
-Entry title:  <span class="fwn fcg">
-Entry body: <div class="_5pbx userContent _3576" data-ft="&#123;&quot;tn&quot;:&quot;K&quot;&#125;">
-Entry URL: 
+Entry title: <h3 class="search-result-title">
+Entry body: <span class="category-str-list">
+Entry URL: <h3 class="search-result-title">
+Entry additional: <div class="secondary-attributes">
+Entry additional: <div class="media-story">
 
-Maximum number of entries: 3 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  
+Maximum number of entries: 50 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  

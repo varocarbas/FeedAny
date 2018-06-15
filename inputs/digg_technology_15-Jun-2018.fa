@@ -1,9 +1,9 @@
-Main URL: https://plus.google.com/+googleplus //URL of the page to be analysed. It has to start with "http://" or "https://".
+Main URL: http://digg.com/channel/technology //URL of the page to be analysed. It has to start with "http://" or "https://".
 
 //All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
 //Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
-Entry title:
-Entry body: <div class="uhswne qhIQqf"> contain "community" and contain "google"
-Entry URL: <div class="BIDenb"> 
+Entry title: <a class="digg-story__title-link js--digg-story__title-link js--digg-story__link">
+Entry body: <div itemprop="description">
+Entry URL: <a class="digg-story__title-link js--digg-story__title-link js--digg-story__link">
 
-Maximum number of entries: 20 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  
+Maximum number of entries: 50 //Only positive integers are expected. Values greater than 500 or smaller than 1 are understood as 500.  
