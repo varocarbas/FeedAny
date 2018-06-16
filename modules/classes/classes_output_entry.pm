@@ -11,6 +11,9 @@ sub Instantiate
 
 	#Integer variable used accessorily while parsing the main entry information, stored in the aforementioned variables.
 	$instance->{"LastI"} = (defined($params{"LastI"}) ? $params{"LastI"} : 0);	
+	
+	#Boolean variable indicating whether the given instance is valid or not.
+	$instance->{"IsOK"} = (defined($params{"IsOK"}) ? $params{"IsOK"} : 1);	
 		
 	bless $instance, $type;  
 }

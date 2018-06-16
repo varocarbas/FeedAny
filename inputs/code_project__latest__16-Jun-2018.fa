@@ -3,8 +3,9 @@ Main URL: https://www.codeproject.com/script/Articles/Latest.aspx //URL of the p
 //All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
 //Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
 Entry title:  <div class="title" name="title"> not contain "blockchain"
-Entry body: <div class="description"> not contain "blockchain"
+Entry body: <div class="modified float-left"> contain "new"
 Entry URL: <div class="title" name="title">
+Entry additional: <div class="description"> not contain "blockchain"
 Entry additional: <div class="author float-left">
 Entry additional: <div class="tags horizontal">
 

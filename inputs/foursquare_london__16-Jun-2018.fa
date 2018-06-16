@@ -3,7 +3,7 @@ Main URL: https://foursquare.com/explore?mode=url&near=London%2C%20Greater%20Lon
 //All the entry inputs expect the starting tag(s) of supported HTML entities, which might include attributes of any kind. All the attribute values are expected to be surrounded by (single or double) quotes.
 //Additionally, all the entry inputs also support the following constraints (all of them ignoring case): "equal", "not equal", "contain", "not contain". These might be linked with the logical operators "and"/"or", which are short-circuited versions evaluated from left to right by ignoring other aspects like parentheses.  
 Entry title: <div class="venueDetails">
-Entry body: <div class="venueDetails">
+Entry body: <div class="venueDetails"> contain "9.6" or contain "9.7"
 Entry URL: <div class="venueDetails">
 Entry additional: <p class="tipText">
 

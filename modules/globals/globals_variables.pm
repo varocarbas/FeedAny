@@ -217,8 +217,8 @@ sub InitialiseHTML()
 #Populates all the limit related variables.
 sub InitialiseLimits()
 {
-	$GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()} = 25;
-	$GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_GLOBAL()} = 50;
+	$GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_INTERNAL()} = 50;
+	$GenericLimits{Globals_Constants::LIMITS_PARSE_MAX_GLOBAL()} = 100;
 	$GenericLimits{Globals_Constants::LIMITS_RSS_MAX_LENGTH()} = 2500;
 	$GenericLimits{Globals_Constants::LIMITS_INPUT_MAX_ENTRIES()} = 500;	
 }

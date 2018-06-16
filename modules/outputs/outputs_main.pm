@@ -54,7 +54,7 @@ sub GetOutputEntries
 		
 		$htmlClass->{"LastI"} = $entry->{"LastI"};
 		my %content = %{$entry->{"Content"}};
-		if (!OutputEntryIsOK(\%content) or OutputEntryRepeated(\@outEntries, \%content)) { next; }
+		if (!$entry->{"IsOK"} or OutputEntryRepeated(\@outEntries, \%content)) { next; }
 
 		push @outEntries, $entry;
 		
@@ -163,13 +163,14 @@ sub GetOutputEntryContent
 	#indices (e.g., $entity->{"LastI"}) have to be corrected to refer to the frame of reference which
 	#is relevant outside this method. The variable $addI is precisely meant to take care of this correction.
 	my $addI = 0;
+	my $isOK = 1;
 	
 	foreach my $input (sort keys %targets0)
 	{
 		my @targets = @{$targets0{$input}->{"Entities"}};
 		my $maxTargets = scalar(@targets) - 1;
 		
-		my @constraints = @{$targets0{$input}->{"Constraints"}};		
+		my @constraints = @{$targets0{$input}->{"Constraints"}};	
 		
 		$htmlClass->{"LastI"} = $lastI0;
 		my $matched = 0;
@@ -218,11 +219,13 @@ sub GetOutputEntryContent
 			#Not matching one of the targets (e.g., title) doesn't necessarily invalidate the given entry,
 			#unless it includes a constraint (e.g., only titles including whatever).
 			#The analysis will better continue anyway to improve the LastI value as much as possible (lower risk of previous information included in latter entries).
-			$outContent{Globals_Constants::INPUT_ENTRY_BODY()} = "";
+			$isOK = 0;
 		}
 	}
+
+	if ($isOK and !OutputEntryIsOK(\%outContent)) { $isOK = 0; }
 	
-	return Output_Entry->Instantiate("LastI" => $outI, "Content" => \%outContent);
+	return Output_Entry->Instantiate("LastI" => $outI, "Content" => \%outContent, "IsOK" => $isOK);
 }
 
 #Makes sure that the content is compatible with all the constraints.
@@ -234,7 +237,8 @@ sub GetOutputEntryContentAnalyseConstraints
 
 	my $maxI = scalar(@constraints) - 1;
 	my $operator = -1;
-
+	my $metOnce = 0;
+	
 	for ($i = 0; $i <= $maxI; $i++)
 	{
 		my $constraint = $constraints[$i];
@@ -249,16 +253,21 @@ sub GetOutputEntryContentAnalyseConstraints
 			)
 			{ return ""; }
 		}
-
-		if (($i < $maxI) and ($constraints[$i]->{"Operator"} eq Globals_Constants::OPERATORS_LOGICAL_OR()))
+		else
 		{
-			#The next constraint doesn't need to be analysed.
-			$i++;
+			$metOnce = 1;
+			
+			if (($i < $maxI) and ($constraints[$i]->{"Operator"} eq Globals_Constants::OPERATORS_LOGICAL_OR()))
+			{
+				#The next constraint doesn't need to be analysed.
+				$i++;
+			}
 		}
+
 		$operator = $constraints[$i]->{"Operator"};
 	}
 
-	return $content;
+	return ($metOnce ? $content : "");
 }
 
 #Makes sure that the content is compatible with the given constraint.
@@ -333,9 +342,8 @@ sub GetOutputEntry
 
 	my $outEntry = GetOutputEntryContent($htmlClass, 0);
 	my %content = %{$outEntry->{"Content"}};
-	my $isOK = OutputEntryIsOK(\%content);
 	my $remoteImg = 0;
-	
+
 	if (GetOutputEntryAdditionalToo(\%{$htmlClass->{"Targets"}}) eq 1)
 	{
 		#Better analysing additionals even when the main analysis was wrong to make sure that the LastI
@@ -345,9 +353,9 @@ sub GetOutputEntry
 		my $tempVar = GetOutputEntryContent($htmlClass, 1);
 		my %additionals = %{$tempVar->{"Content"}};
 		
-		if ($isOK)
+		if ($outEntry->{"IsOK"})
 		{
-			if (OutputEntryIsOK(\%additionals))
+			if ($tempVar->{"IsOK"})
 			{
 				$remoteImg = 1;
 				my $body = $content{Globals_Constants::INPUT_ENTRY_BODY()};
@@ -361,14 +369,14 @@ sub GetOutputEntry
 			else
 			{
 				#One of the additional fields constraints hasn't been met and the whole entry is invalid.
-				$content{Globals_Constants::INPUT_ENTRY_BODY()} = "";		
+				$outEntry->{"IsOK"} = 0;		
 			}		
 		}
 		
 		if ($tempVar->{"LastI"} > $outEntry->{"LastI"}) { $outEntry->{"LastI"} = $tempVar->{"LastI"}; }
 	}
 		
-	if ($isOK and $remoteImg)
+	if ($outEntry->{"IsOK"} and $remoteImg)
 	{
 		#There are various elements in the body (i.e., main and, at least, one additional) and better removing
 		#all the imgs to ensure the visibility of all of them.
@@ -411,7 +419,7 @@ sub OutputEntryIsOK
 	
 	return 
 	(
-		!exists $content{Globals_Constants::INPUT_ENTRY_BODY()} or
+		exists $content{Globals_Constants::INPUT_ENTRY_BODY()} or
 		!defined($content{Globals_Constants::INPUT_ENTRY_BODY()}) or
 		length(Accessory::Trim($content{Globals_Constants::INPUT_ENTRY_BODY()})) < 1 ? 0 : 1
 	);
