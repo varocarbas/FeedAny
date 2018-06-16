@@ -25,7 +25,7 @@ All the input files are expected to follow these rules:
 - It is possible to include as many additional inputs (i.e., "Entry additional") as desired.
 
 
-## Authorship & Copyright
+## Authorship & copyright
 
 I, Alvaro Carballo Garcia (varocarbas), am the sole author of each single bit of this code.
 
